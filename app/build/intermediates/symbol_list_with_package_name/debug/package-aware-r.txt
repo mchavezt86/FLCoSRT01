@@ -1,4 +1,4 @@
-com.example.android.camera2.basic
+com.android.flcosrt01.basic
 anim abc_fade_in
 anim abc_fade_out
 anim abc_grow_fade_in_from_bottom
@@ -1071,7 +1071,6 @@ drawable ic_launcher
 drawable ic_mtrl_chip_checked_black
 drawable ic_mtrl_chip_checked_circle
 drawable ic_mtrl_chip_close_circle
-drawable ic_photo
 drawable ic_shutter
 drawable ic_shutter_focused
 drawable ic_shutter_normal

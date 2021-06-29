@@ -30,9 +30,5 @@
     {
         "merged": "/media/miguel/Datos/AndroidStudio/FLCoSRT01/app/build/intermediates/res/merged/debug/layout_activity_camera.xml.flat",
         "source": "/media/miguel/Datos/AndroidStudio/FLCoSRT01/app/src/main/res/layout/activity_camera.xml"
-    },
-    {
-        "merged": "/media/miguel/Datos/AndroidStudio/FLCoSRT01/app/build/intermediates/res/merged/debug/drawable_ic_photo.xml.flat",
-        "source": "/media/miguel/Datos/AndroidStudio/FLCoSRT01/app/src/main/res/drawable/ic_photo.xml"
     }
 ]

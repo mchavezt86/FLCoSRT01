@@ -62,7 +62,7 @@ INJECTED from /media/miguel/Datos/AndroidStudio/FLCoSRT01/app/src/main/AndroidMa
 INJECTED from /media/miguel/Datos/AndroidStudio/FLCoSRT01/app/src/main/AndroidManifest.xml:17:1-49:12
 INJECTED from /media/miguel/Datos/AndroidStudio/FLCoSRT01/app/src/main/AndroidManifest.xml:17:1-49:12
 	package
-		ADDED from /media/miguel/Datos/AndroidStudio/FLCoSRT01/app/src/main/AndroidManifest.xml:19:5-48
+		ADDED from /media/miguel/Datos/AndroidStudio/FLCoSRT01/app/src/main/AndroidManifest.xml:19:5-42
 		INJECTED from /media/miguel/Datos/AndroidStudio/FLCoSRT01/app/src/main/AndroidManifest.xml
 		INJECTED from /media/miguel/Datos/AndroidStudio/FLCoSRT01/app/src/main/AndroidManifest.xml
 	android:versionName
@@ -117,14 +117,14 @@ MERGED from [com.github.bumptech.glide:gifdecoder:4.11.0] /home/miguel/.gradle/c
 		ADDED from /media/miguel/Datos/AndroidStudio/FLCoSRT01/app/src/main/AndroidManifest.xml:32:9-45
 	android:allowBackup
 		ADDED from /media/miguel/Datos/AndroidStudio/FLCoSRT01/app/src/main/AndroidManifest.xml:29:9-35
-activity#com.example.android.camera2.basic.CameraActivity
+activity#com.android.flcosrt01.basic.CameraActivity
 ADDED from /media/miguel/Datos/AndroidStudio/FLCoSRT01/app/src/main/AndroidManifest.xml:35:9-46:20
 	android:clearTaskOnLaunch
 		ADDED from /media/miguel/Datos/AndroidStudio/FLCoSRT01/app/src/main/AndroidManifest.xml:37:13-45
 	android:theme
 		ADDED from /media/miguel/Datos/AndroidStudio/FLCoSRT01/app/src/main/AndroidManifest.xml:38:13-44
 	android:name
-		ADDED from /media/miguel/Datos/AndroidStudio/FLCoSRT01/app/src/main/AndroidManifest.xml:36:13-76
+		ADDED from /media/miguel/Datos/AndroidStudio/FLCoSRT01/app/src/main/AndroidManifest.xml:36:13-70
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
 ADDED from /media/miguel/Datos/AndroidStudio/FLCoSRT01/app/src/main/AndroidManifest.xml:41:13-44:29
 action#android.intent.action.MAIN

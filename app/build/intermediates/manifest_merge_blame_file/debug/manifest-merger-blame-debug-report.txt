@@ -15,7 +15,7 @@
 15  ~ limitations under the License.
 16-->
 17<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-18    package="com.android.example.camera2.basic"
+18    package="com.android.flcosrt01.basic"
 19    android:versionCode="1"
 20    android:versionName="1.0.0" >
 21
@@ -57,8 +57,8 @@
 42        android:testOnly="true" >
 43        <activity
 43-->/media/miguel/Datos/AndroidStudio/FLCoSRT01/app/src/main/AndroidManifest.xml:35:9-46:20
-44            android:name="com.example.android.camera2.basic.CameraActivity"
-44-->/media/miguel/Datos/AndroidStudio/FLCoSRT01/app/src/main/AndroidManifest.xml:36:13-76
+44            android:name="com.android.flcosrt01.basic.CameraActivity"
+44-->/media/miguel/Datos/AndroidStudio/FLCoSRT01/app/src/main/AndroidManifest.xml:36:13-70
 45            android:clearTaskOnLaunch="true"
 45-->/media/miguel/Datos/AndroidStudio/FLCoSRT01/app/src/main/AndroidManifest.xml:37:13-45
 46            android:theme="@style/AppTheme" >
