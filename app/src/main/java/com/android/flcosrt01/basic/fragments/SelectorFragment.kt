@@ -23,6 +23,8 @@ import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CameraMetadata
 import android.os.Bundle
+import android.util.Log
+import android.util.Size
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -60,8 +62,8 @@ class SelectorFragment : Fragment() {
                 view.setOnClickListener {
                     Navigation.findNavController(requireActivity(), R.id.fragment_container)
                             .navigate(
-                                com.android.flcosrt01.basic.fragments.SelectorFragmentDirections.actionSelectorToCamera(
-                                    item.cameraId, item.format
+                                SelectorFragmentDirections.actionSelectorToCamera(
+                                    item.cameraId, item.format, item.size.width,  item.size.height
                                 )
                             )
                 }
@@ -73,7 +75,7 @@ class SelectorFragment : Fragment() {
     companion object {
 
         /** Helper class used as a data holder for each selectable camera format item */
-        private data class FormatItem(val title: String, val cameraId: String, val format: Int)
+        private data class FormatItem(val title: String, val cameraId: String, val format: Int, val size: Size)
 
         /** Helper function used to convert a lens orientation enum into a human-readable string */
         private fun lensOrientationString(value: Int) = when(value) {
@@ -109,34 +111,38 @@ class SelectorFragment : Fragment() {
                         CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)!!
                 val outputFormats = characteristics.get(
                         CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!.outputFormats
-
-                // All cameras *must* support JPEG output so we don't need to check characteristics
-                availableCameras.add(
-                    FormatItem(
-                        "$orientation JPEG ($id)", id, ImageFormat.JPEG)
-                )
-
-                // Return cameras that support RAW capability
-                if (capabilities.contains(
-                                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW) &&
-                        outputFormats.contains(ImageFormat.RAW_SENSOR)) {
+                // Try to get the output sizes - mact
+                val outputSizes = characteristics.get(
+                    CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!.getOutputSizes(ImageFormat.YUV_420_888)
+                outputSizes.forEach { size ->
+                    // All cameras *must* support JPEG output so we don't need to check characteristics
+                    // Replaced the JPEG output to YUV_420_288 - mact
                     availableCameras.add(
                         FormatItem(
-                            "$orientation RAW ($id)", id, ImageFormat.RAW_SENSOR)
+                            "$orientation JPEG ($id) $size", id, ImageFormat.YUV_420_888, size)
                     )
-                }
 
-                // Return cameras that support JPEG DEPTH capability
-                if (capabilities.contains(
+                    // Return cameras that support RAW capability
+                    if (capabilities.contains(
+                            CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW) &&
+                        outputFormats.contains(ImageFormat.RAW_SENSOR)) {
+                        availableCameras.add(
+                            FormatItem(
+                                "$orientation RAW ($id) $size", id, ImageFormat.RAW_SENSOR, size)
+                        )
+                    }
+
+                    // Return cameras that support JPEG DEPTH capability
+                    if (capabilities.contains(
                             CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT) &&
                         outputFormats.contains(ImageFormat.DEPTH_JPEG)) {
-                    availableCameras.add(
-                        FormatItem(
-                            "$orientation DEPTH ($id)", id, ImageFormat.DEPTH_JPEG)
-                    )
+                        availableCameras.add(
+                            FormatItem(
+                                "$orientation DEPTH ($id) $size", id, ImageFormat.DEPTH_JPEG, size)
+                        )
+                    }
                 }
             }
-
             return availableCameras
         }
     }

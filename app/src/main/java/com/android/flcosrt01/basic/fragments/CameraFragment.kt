@@ -33,6 +33,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
+import android.util.Size
 import android.view.LayoutInflater
 import android.view.Surface
 import android.view.SurfaceHolder
@@ -62,6 +63,8 @@ import java.text.SimpleDateFormat
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.RuntimeException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -71,9 +74,10 @@ class CameraFragment : Fragment() {
 
     /** Counter of ImageReader readings */
     private var imgCounter = 0
+    private var  read : AtomicBoolean = AtomicBoolean(false)
 
     /** AndroidX navigation arguments */
-    private val args: com.android.flcosrt01.basic.fragments.CameraFragmentArgs by navArgs()
+    private val args: CameraFragmentArgs by navArgs()
 
     /** Host's navigation controller */
     private val navController: NavController by lazy {
@@ -109,6 +113,7 @@ class CameraFragment : Fragment() {
             overlay.postDelayed({
                 // Remove white flash animation
                 overlay.background = null
+                overlay.postDelayed(animationTask, CameraActivity.ANIMATION_FAST_MILLIS)
             }, CameraActivity.ANIMATION_FAST_MILLIS)
         }
     }
@@ -194,9 +199,12 @@ class CameraFragment : Fragment() {
         camera = openCamera(cameraManager, args.cameraId, cameraHandler)
 
         // Initialize an image reader which will be used to capture still photos
-        val size = characteristics.get(
+        /* We need to change this to use ImageFormat.YUV_420_888 and use the size selected in the
+        * Selector Fragment. mact */
+        /*val size = characteristics.get(
                 CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!
-                .getOutputSizes(args.pixelFormat).maxBy { it.height * it.width }!!
+                .getOutputSizes(args.pixelFormat).maxBy { it.height * it.width }!!*/
+        val size = Size(args.width,args.height)
         imageReader = ImageReader.newInstance(
                 size.width, size.height, ImageFormat.YUV_420_888, IMAGE_BUFFER_SIZE
         )
@@ -225,6 +233,11 @@ class CameraFragment : Fragment() {
             // Disable click listener to prevent multiple requests simultaneously in flight
             it.isEnabled = false
             it.isClickable = false
+
+            overlay.post(animationTask)
+
+            val imageQueue = ArrayBlockingQueue<Image>(TOTAL_IMAGES)
+            //val imageQueue = ConcurrentLinkedDeque<Image>()
 
             // Perform I/O heavy operations in a different scope
             lifecycleScope.launch(Dispatchers.IO) {
@@ -256,34 +269,21 @@ class CameraFragment : Fragment() {
 
                 // Flush any images left in the image reader
                 @Suppress("ControlFlowWithEmptyBody")
-                while (imageReader.acquireNextImage() != null) {}
+                //while (imageReader.acquireNextImage() != null) {}
+                imageReader.acquireLatestImage().close()
 
                 // Start a new image queue
-                val imageQueue = ArrayBlockingQueue<Image>(TOTAL_IMAGES)
-                val startTime = System.currentTimeMillis()
+                //val imageQueue = ArrayBlockingQueue<Image>(TOTAL_IMAGES)
+                //val startTime = System.currentTimeMillis()
                 imageReader.setOnImageAvailableListener({ reader ->
                     val image = reader.acquireNextImage()
                     //Log.d(TAG, "Image available in queue: ${image.timestamp}")
                     imageQueue.add(image)
-                    imgCounter += 1
-                    Log.d(TAG, "Image counter: $imgCounter")
                     image.close()
+                    imgCounter += 1
+                    //read.set(true)
+                    Log.d(TAG, "Image counter: $imgCounter")
                 }, imageReaderHandler)
-
-                // Try to open a queue to get the images in another Thread
-                lifecycleScope.launch(Dispatchers.Default) {
-                    while(imgCounter < 100){
-                        imageQueue.take().close()
-                        Log.d(TAG,"Taking image")
-                    }
-                    val totalTime = System.currentTimeMillis() - startTime
-                    Log.d(TAG,"FPS: ${100000.0/totalTime}")
-                    imageReader.setOnImageAvailableListener(null, null)
-                    viewFinder.removeCallbacks(animationTask)
-                    imgCounter = 0
-                    imageQueue.clear()
-                    it.post { it.isEnabled = true}
-                }
 
                 // Wait for 10 images to be captured
                 /*while(imgCounter < TOTAL_IMAGES){
@@ -295,6 +295,30 @@ class CameraFragment : Fragment() {
                 imageQueue.clear()*/
 
                 // Re-enable click listener after photo is taken
+                /*it.post {
+                    it.isEnabled = true
+                    it.isClickable = true
+                }*/
+            }
+            // Try to open a queue to get the images in another Thread
+            lifecycleScope.launch(Dispatchers.Default) {
+                val startTime = System.currentTimeMillis()
+                var readCounter = 1
+                while(imgCounter < 100){
+                    imageQueue.take().close()
+                    Log.d(TAG,"Taking image $imgCounter")
+                    /*if (imgCounter == readCounter) {
+                        imageQueue.take().close()
+                        Log.d(TAG,"Taking image $imgCounter")
+                        readCounter += 1
+                    }*/
+                }
+                imageReader.setOnImageAvailableListener(null, imageReaderHandler)
+                val totalTime = System.currentTimeMillis() - startTime
+                Log.d(TAG,"FPS: ${100000.0/totalTime}")
+                overlay.removeCallbacks(animationTask)
+                imgCounter = 0
+                imageQueue.clear()
                 it.post {
                     it.isEnabled = true
                     it.isClickable = true
@@ -363,7 +387,7 @@ class CameraFragment : Fragment() {
      * template. It performs synchronization between the [CaptureResult] and the [Image] resulting
      * from the single capture, and outputs a [CombinedCaptureResult] object.
      */
-    private suspend fun takePhoto():
+    /*private suspend fun takePhoto():
             Unit = suspendCoroutine { cont ->
 
         // Flush any images left in the image reader
@@ -383,8 +407,8 @@ class CameraFragment : Fragment() {
 
         val captureRequest = session.device.createCaptureRequest(
                 CameraDevice.TEMPLATE_PREVIEW).apply { addTarget(imageReader.surface) }
-        //session.setRepeatingRequest(captureRequest.build(), null, cameraHandler)
-        session.setRepeatingRequest(captureRequest.build(), object : CameraCaptureSession.CaptureCallback() {
+        session.setRepeatingRequest(captureRequest.build(), null, cameraHandler)
+        /*session.setRepeatingRequest(captureRequest.build(), object : CameraCaptureSession.CaptureCallback() {
 
             override fun onCaptureStarted(
                     session: CameraCaptureSession,
@@ -447,11 +471,11 @@ class CameraFragment : Fragment() {
                     }
                 }
             }*/
-        }, cameraHandler)
-    }
+        }, cameraHandler)*/
+    }*/
 
     /** Helper function used to save a [CombinedCaptureResult] into a [File] */
-    private suspend fun saveResult(result: CombinedCaptureResult): File = suspendCoroutine { cont ->
+    /*private suspend fun saveResult(result: CombinedCaptureResult): File = suspendCoroutine { cont ->
         when (result.format) {
 
             // When the format is JPEG or DEPTH JPEG we can simply save the bytes as-is
@@ -488,7 +512,7 @@ class CameraFragment : Fragment() {
                 cont.resumeWithException(exc)
             }
         }
-    }
+    }*/
 
     override fun onStop() {
         super.onStop()
@@ -532,9 +556,9 @@ class CameraFragment : Fragment() {
          *
          * @return [File] created.
          */
-        private fun createFile(context: Context, extension: String): File {
+        /*private fun createFile(context: Context, extension: String): File {
             val sdf = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS", Locale.US)
             return File(context.filesDir, "IMG_${sdf.format(Date())}.$extension")
-        }
+        }*/
     }
 }

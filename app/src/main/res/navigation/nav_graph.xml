@@ -70,6 +70,12 @@
             android:id="@+id/action_camera_to_jpeg_viewer"
             app:launchSingleTop="true"
             app:destination="@id/image_viewer_fragment" />
+        <argument
+            android:name="width"
+            app:argType="integer" />
+        <argument
+            android:name="height"
+            app:argType="integer" />
 
     </fragment>
 
