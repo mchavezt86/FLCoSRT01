@@ -46,6 +46,13 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    packagingOptions {
+        exclude 'META-INF/native-image/android-x86_64/jnijavacpp/jni-config.json'
+        exclude 'META-INF/native-image/android-x86_64/jnijavacpp/reflect-config.json'
+        exclude 'META-INF/native-image/android-arm64/jnijavacpp/jni-config.json'
+        exclude 'META-INF/native-image/android-arm64/jnijavacpp/reflect-config.json'
+    }
 }
 
 dependencies {
@@ -86,4 +93,18 @@ dependencies {
     androidTestImplementation 'androidx.test:rules:1.2.0'
     androidTestImplementation 'androidx.test:runner:1.2.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+
+    // OpenCV from bytedeco
+    // https://mvnrepository.com/artifact/org.bytedeco/opencv
+    implementation group: 'org.bytedeco', name: 'opencv', version: '4.5.1-1.5.5'
+    implementation group: 'org.bytedeco', name: 'opencv', version: '4.5.1-1.5.5', classifier: 'android-arm64'
+    implementation group: 'org.bytedeco', name: 'opencv', version: '4.5.1-1.5.5', classifier: 'android-x86_64'
+    // OpenBLAS (required) from bytedeco
+    // https://mvnrepository.com/artifact/org.bytedeco/openblas
+    implementation group: 'org.bytedeco', name: 'openblas', version: '0.3.13-1.5.5'
+    implementation group: 'org.bytedeco', name: 'openblas', version: '0.3.13-1.5.5', classifier: 'android-arm64'
+    implementation group: 'org.bytedeco', name: 'openblas', version: '0.3.13-1.5.5', classifier: 'android-x86_64'
+
+
+
 }

@@ -26,7 +26,6 @@ import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.CaptureResult
-import android.hardware.camera2.DngCreator
 import android.media.Image
 import android.media.ImageReader
 import android.os.Bundle
@@ -52,19 +51,18 @@ import com.example.android.camera.utils.OrientationLiveData
 import com.android.flcosrt01.basic.CameraActivity
 import com.android.flcosrt01.basic.R
 import kotlinx.android.synthetic.main.fragment_camera.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.*
+import org.bytedeco.opencv.opencv_core.*
+import org.opencv.core.CvType
+import org.bytedeco.opencv.global.opencv_imgcodecs.imwrite
 import java.io.Closeable
 import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
+import java.lang.Runnable
 import java.text.SimpleDateFormat
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.RuntimeException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -74,7 +72,15 @@ class CameraFragment : Fragment() {
 
     /** Counter of ImageReader readings */
     private var imgCounter = 0
-    private var  read : AtomicBoolean = AtomicBoolean(false)
+
+    /** Variables of the output of an ImageReader readings: length of the Y buffer */
+    private var yBufferLength = 0
+
+    /** Hardcoded ROI */
+    private lateinit var roi : Rect
+
+    /** Queue for each Mat after applying the ROI mask.*/
+    private val roiMatQueue = ConcurrentLinkedDeque<Mat>()
 
     /** AndroidX navigation arguments */
     private val args: CameraFragmentArgs by navArgs()
@@ -113,7 +119,7 @@ class CameraFragment : Fragment() {
             overlay.postDelayed({
                 // Remove white flash animation
                 overlay.background = null
-                overlay.postDelayed(animationTask, CameraActivity.ANIMATION_FAST_MILLIS)
+                //overlay.postDelayed(animationTask, CameraActivity.ANIMATION_FAST_MILLIS)
             }, CameraActivity.ANIMATION_FAST_MILLIS)
         }
     }
@@ -198,12 +204,11 @@ class CameraFragment : Fragment() {
         // Open the selected camera
         camera = openCamera(cameraManager, args.cameraId, cameraHandler)
 
-        // Initialize an image reader which will be used to capture still photos
+        var startTime = 0L
+
+        // Initialize an image reader which will be used to capture continuously
         /* We need to change this to use ImageFormat.YUV_420_888 and use the size selected in the
         * Selector Fragment. mact */
-        /*val size = characteristics.get(
-                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!
-                .getOutputSizes(args.pixelFormat).maxBy { it.height * it.width }!!*/
         val size = Size(args.width,args.height)
         imageReader = ImageReader.newInstance(
                 size.width, size.height, ImageFormat.YUV_420_888, IMAGE_BUFFER_SIZE
@@ -216,7 +221,6 @@ class CameraFragment : Fragment() {
         session = createCaptureSession(camera, targets, cameraHandler)
 
         val captureRequest = camera.createCaptureRequest(
-                //CameraDevice.TEMPLATE_PREVIEW).apply { addTarget(viewFinder.holder.surface)
                 CameraDevice.TEMPLATE_PREVIEW).apply {
                     addTarget(viewFinder.holder.surface)
                     addTarget(imageReader.surface)
@@ -227,6 +231,25 @@ class CameraFragment : Fragment() {
         // session is torn down or session.stopRepeating() is called
         session.setRepeatingRequest(captureRequest.build(), null, cameraHandler)
 
+        // Try to get a first image from the ImageReader to get its buffer length
+        imageReader.setOnImageAvailableListener({ reader ->
+            val image = reader.acquireLatestImage()
+            yBufferLength = image.planes[0].buffer.remaining() //Buffer length
+            image.close()
+        },imageReaderHandler)
+
+        /* Wait for the imageReader to get the buffer length */
+        @Suppress("ControlFlowWithEmptyBody")
+        while (yBufferLength == 0){ delay(10) }
+        imageReader.setOnImageAvailableListener(null,imageReaderHandler)
+        Log.d(TAG,"ImageReader -> width: ${size.width}, height: ${size.height}, Y-Buffer size: $yBufferLength ")
+        roi = Rect(size.width/3,size.height/3,size.width/3,size.height/3)
+
+        /* Crate an ArrayBlockingQueue of ByteBuffers of size TOTAL_IMAGES. Check this constant
+        * because it determines the amount of images the bufferQueue can store, while another
+        * thread tries to read it */
+        val bufferQueue = ArrayBlockingQueue<ByteArray>(TOTAL_IMAGES,true)
+
         // Listen to the capture button
         capture_button.setOnClickListener {
 
@@ -236,95 +259,75 @@ class CameraFragment : Fragment() {
 
             overlay.post(animationTask)
 
-            val imageQueue = ArrayBlockingQueue<Image>(TOTAL_IMAGES)
-            //val imageQueue = ConcurrentLinkedDeque<Image>()
-
             // Perform I/O heavy operations in a different scope
             lifecycleScope.launch(Dispatchers.IO) {
-                /*takePhoto().use { result ->
-                    Log.d(TAG, "Result received: $result")
-
-                    // Save the result to disk
-                    val output = saveResult(result)
-                    Log.d(TAG, "Image saved: ${output.absolutePath}")
-
-                    // If the result is a JPEG file, update EXIF metadata with orientation info
-                    if (output.extension == "jpg") {
-                        val exif = ExifInterface(output.absolutePath)
-                        exif.setAttribute(
-                                ExifInterface.TAG_ORIENTATION, result.orientation.toString())
-                        exif.saveAttributes()
-                        Log.d(TAG, "EXIF metadata saved: ${output.absolutePath}")
-                    }
-
-                    // Display the photo taken to user
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        navController.navigate(CameraFragmentDirections
-                                .actionCameraToJpegViewer(output.absolutePath)
-                                .setOrientation(result.orientation)
-                                .setDepth(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
-                                        result.format == ImageFormat.DEPTH_JPEG))
-                    }
-                }*/
-
                 // Flush any images left in the image reader
-                @Suppress("ControlFlowWithEmptyBody")
-                //while (imageReader.acquireNextImage() != null) {}
                 imageReader.acquireLatestImage().close()
 
-                // Start a new image queue
-                //val imageQueue = ArrayBlockingQueue<Image>(TOTAL_IMAGES)
-                //val startTime = System.currentTimeMillis()
+                // Save the start time.
+                startTime = System.currentTimeMillis()
+                /* Set the ImageReader listener to just get the Y-plane of the YUV image. This plane
+                * contains just the grayscale version of the image captured.
+                * This reads, gets the plane and stores the byteArray variable in the
+                * ArrayBlockingQueue bufferQueue*/
                 imageReader.setOnImageAvailableListener({ reader ->
                     val image = reader.acquireNextImage()
-                    //Log.d(TAG, "Image available in queue: ${image.timestamp}")
-                    imageQueue.add(image)
+                    val byteArray = ByteArray(yBufferLength)
+                    image.planes[0].buffer.get(byteArray,0,yBufferLength)
+                    bufferQueue.add(byteArray)
                     image.close()
-                    imgCounter += 1
-                    //read.set(true)
                     Log.d(TAG, "Image counter: $imgCounter")
+                    imgCounter += 1
                 }, imageReaderHandler)
-
-                // Wait for 10 images to be captured
-                /*while(imgCounter < TOTAL_IMAGES){
-                    //Log.i(TAG,"Waiting for 10 images.")
-                }
-                imageReader.setOnImageAvailableListener(null, null)
-                viewFinder.removeCallbacks(animationTask)
-                imgCounter = 0
-                imageQueue.clear()*/
-
-                // Re-enable click listener after photo is taken
-                /*it.post {
-                    it.isEnabled = true
-                    it.isClickable = true
-                }*/
             }
-            // Try to open a queue to get the images in another Thread
+            /* Launch another thread to take the byteArrays from the queue and stores them as Mat
+            * objects in the ConcurrentLinkedDeque roiMatQueue*/
             lifecycleScope.launch(Dispatchers.Default) {
-                val startTime = System.currentTimeMillis()
-                var readCounter = 1
-                while(imgCounter < 100){
-                    imageQueue.take().close()
-                    Log.d(TAG,"Taking image $imgCounter")
-                    /*if (imgCounter == readCounter) {
-                        imageQueue.take().close()
-                        Log.d(TAG,"Taking image $imgCounter")
-                        readCounter += 1
-                    }*/
+                var readCounter = 0
+                while(readCounter < 100){
+                    val imgBytes = withContext(Dispatchers.IO){ bufferQueue.take() }
+                    val matImg = Mat(size.height,size.width,CvType.CV_8UC1)
+                    matImg.data().put(imgBytes,0,imgBytes.size)
+                    synchronized(roiMatQueue){
+                        //roiMatQueue.add(Mat(matImg,roi))
+                        roiMatQueue.add(matImg)
+                    }
+                    Log.d(TAG,"Taking image $readCounter")
+                    readCounter += 1
                 }
+
+                /* When finished clean some variables, remove the ImageReader listener, print the
+                * calculated FPS and re-enable the capture button */
                 imageReader.setOnImageAvailableListener(null, imageReaderHandler)
                 val totalTime = System.currentTimeMillis() - startTime
                 Log.d(TAG,"FPS: ${100000.0/totalTime}")
-                overlay.removeCallbacks(animationTask)
+                overlay.post(animationTask)
                 imgCounter = 0
-                imageQueue.clear()
+                //imageQueue.clear()
+                bufferQueue.clear()
                 it.post {
                     it.isEnabled = true
                     it.isClickable = true
                 }
+                // Loop the roiMatQueue to save the files
+                Log.d(TAG,"Saving files...")
+                while (roiMatQueue.peekFirst() != null){
+                    saveImage(roiMatQueue.pollFirst()!!)
+                }
             }
         }
+    }
+
+    /** Function to save a [Mat] object as a JPG image */
+    private fun saveImage(mat : Mat) : Boolean {
+        val file = createFile(requireContext(), "jpg")
+        return imwrite(file.absolutePath,mat)
+    }
+
+    /** Creates a [File] named with the current date and time */
+    private fun createFile(context: Context, extension: String): File {
+        val sdf = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS", Locale.US)
+        return File(context.filesDir, "IMG_${sdf.format(Date())}.$extension")
     }
 
     /** Opens the camera and returns the opened device (as the result of the suspend coroutine) */
@@ -382,142 +385,11 @@ class CameraFragment : Fragment() {
         }, handler)
     }
 
-    /**
-     * Helper function used to capture a still image using the [CameraDevice.TEMPLATE_STILL_CAPTURE]
-     * template. It performs synchronization between the [CaptureResult] and the [Image] resulting
-     * from the single capture, and outputs a [CombinedCaptureResult] object.
-     */
-    /*private suspend fun takePhoto():
-            Unit = suspendCoroutine { cont ->
-
-        // Flush any images left in the image reader
-        @Suppress("ControlFlowWithEmptyBody")
-        while (imageReader.acquireNextImage() != null) {}
-
-        // Start a new image queue
-        val imageQueue = ArrayBlockingQueue<Image>(TOTAL_IMAGES)
-        imageReader.setOnImageAvailableListener({ reader ->
-            val image = reader.acquireNextImage()
-            Log.d(TAG, "Image available in queue: ${image.timestamp}")
-            imageQueue.add(image)
-            imgCounter += 1
-            Log.d(TAG, "Image counter: $imgCounter")
-            image.close()
-        }, imageReaderHandler)
-
-        val captureRequest = session.device.createCaptureRequest(
-                CameraDevice.TEMPLATE_PREVIEW).apply { addTarget(imageReader.surface) }
-        session.setRepeatingRequest(captureRequest.build(), null, cameraHandler)
-        /*session.setRepeatingRequest(captureRequest.build(), object : CameraCaptureSession.CaptureCallback() {
-
-            override fun onCaptureStarted(
-                    session: CameraCaptureSession,
-                    request: CaptureRequest,
-                    timestamp: Long,
-                    frameNumber: Long) {
-                super.onCaptureStarted(session, request, timestamp, frameNumber)
-                viewFinder.post(animationTask)
-            }
-
-            /*override fun onCaptureCompleted(
-                    session: CameraCaptureSession,
-                    request: CaptureRequest,
-                    result: TotalCaptureResult) {
-                super.onCaptureCompleted(session, request, result)
-                val resultTimestamp = result.get(CaptureResult.SENSOR_TIMESTAMP)
-                Log.d(TAG, "Capture result received: $resultTimestamp")
-
-                // Set a timeout in case image captured is dropped from the pipeline
-                val exc = TimeoutException("Image dequeuing took too long")
-                val timeoutRunnable = Runnable { cont.resumeWithException(exc) }
-                imageReaderHandler.postDelayed(timeoutRunnable, IMAGE_CAPTURE_TIMEOUT_MILLIS)
-
-                // Loop in the coroutine's context until an image with matching timestamp comes
-                // We need to launch the coroutine context again because the callback is done in
-                //  the handler provided to the `capture` method, not in our coroutine context
-                @Suppress("BlockingMethodInNonBlockingContext")
-                lifecycleScope.launch(cont.context) {
-                    while (true) {
-
-                        // Dequeue images while timestamps don't match
-                        val image = imageQueue.take()
-                        // TODO(owahltinez): b/142011420
-                        // if (image.timestamp != resultTimestamp) continue
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
-                                image.format != ImageFormat.DEPTH_JPEG &&
-                                image.timestamp != resultTimestamp) continue
-                         Log.d(TAG, "Matching image dequeued: ${image.timestamp}")
-
-                        // Unset the image reader listener
-                        imageReaderHandler.removeCallbacks(timeoutRunnable)
-                        imageReader.setOnImageAvailableListener(null, null)
-
-                        // Clear the queue of images, if there are left
-                        while (imageQueue.size > 0) {
-                            imageQueue.take().close()
-                        }
-
-                        // Compute EXIF orientation metadata
-                        val rotation = relativeOrientation.value ?: 0
-                        val mirrored = characteristics.get(CameraCharacteristics.LENS_FACING) ==
-                                CameraCharacteristics.LENS_FACING_FRONT
-                        val exifOrientation = computeExifOrientation(rotation, mirrored)
-
-                        // Build the result and resume progress
-                        cont.resume(CombinedCaptureResult(
-                                image, result, exifOrientation, imageReader.imageFormat))
-
-                        // There is no need to break out of the loop, this coroutine will suspend
-                    }
-                }
-            }*/
-        }, cameraHandler)*/
-    }*/
-
-    /** Helper function used to save a [CombinedCaptureResult] into a [File] */
-    /*private suspend fun saveResult(result: CombinedCaptureResult): File = suspendCoroutine { cont ->
-        when (result.format) {
-
-            // When the format is JPEG or DEPTH JPEG we can simply save the bytes as-is
-            ImageFormat.JPEG, ImageFormat.DEPTH_JPEG -> {
-                val buffer = result.image.planes[0].buffer
-                val bytes = ByteArray(buffer.remaining()).apply { buffer.get(this) }
-                try {
-                    val output = createFile(requireContext(), "jpg")
-                    FileOutputStream(output).use { it.write(bytes) }
-                    cont.resume(output)
-                } catch (exc: IOException) {
-                    Log.e(TAG, "Unable to write JPEG image to file", exc)
-                    cont.resumeWithException(exc)
-                }
-            }
-
-            // When the format is RAW we use the DngCreator utility library
-            ImageFormat.RAW_SENSOR -> {
-                val dngCreator = DngCreator(characteristics, result.metadata)
-                try {
-                    val output = createFile(requireContext(), "dng")
-                    FileOutputStream(output).use { dngCreator.writeImage(it, result.image) }
-                    cont.resume(output)
-                } catch (exc: IOException) {
-                    Log.e(TAG, "Unable to write DNG image to file", exc)
-                    cont.resumeWithException(exc)
-                }
-            }
-
-            // No other formats are supported by this sample
-            else -> {
-                val exc = RuntimeException("Unknown image format: ${result.image.format}")
-                Log.e(TAG, exc.message, exc)
-                cont.resumeWithException(exc)
-            }
-        }
-    }*/
-
     override fun onStop() {
         super.onStop()
         try {
             camera.close()
+            imageReader.close()
         } catch (exc: Throwable) {
             Log.e(TAG, "Error closing camera", exc)
         }
@@ -536,7 +408,7 @@ class CameraFragment : Fragment() {
         private const val IMAGE_BUFFER_SIZE: Int = 3
 
         /** Maximum number of images that will be held in the reader's buffer */
-        private const val TOTAL_IMAGES: Int = 10
+        private const val TOTAL_IMAGES: Int = 50
 
         /** Maximum time allowed to wait for the result of an image capture */
         private const val IMAGE_CAPTURE_TIMEOUT_MILLIS: Long = 5000
@@ -550,15 +422,5 @@ class CameraFragment : Fragment() {
         ) : Closeable {
             override fun close() = image.close()
         }
-
-        /**
-         * Create a [File] named a using formatted timestamp with the current date and time.
-         *
-         * @return [File] created.
-         */
-        /*private fun createFile(context: Context, extension: String): File {
-            val sdf = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS", Locale.US)
-            return File(context.filesDir, "IMG_${sdf.format(Date())}.$extension")
-        }*/
     }
 }
