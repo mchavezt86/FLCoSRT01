@@ -22,6 +22,7 @@ import android.graphics.ImageFormat
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CameraMetadata
+import android.media.MediaRecorder
 import android.os.Bundle
 import android.util.Log
 import android.util.Size
@@ -114,6 +115,7 @@ class SelectorFragment : Fragment() {
                 // Try to get the output sizes - mact
                 val outputSizes = characteristics.get(
                     CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!.getOutputSizes(ImageFormat.YUV_420_888)
+                    //CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!.getOutputSizes(MediaRecorder::class.java)
                 outputSizes.forEach { size ->
                     // All cameras *must* support JPEG output so we don't need to check characteristics
                     // Replaced the JPEG output to YUV_420_288 - mact

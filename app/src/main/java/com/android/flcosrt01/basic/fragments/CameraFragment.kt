@@ -240,8 +240,11 @@ class CameraFragment : Fragment() {
 
         /* Wait for the imageReader to get the buffer length */
         @Suppress("ControlFlowWithEmptyBody")
-        while (yBufferLength == 0){ delay(10) }
-        imageReader.setOnImageAvailableListener(null,imageReaderHandler)
+        while (yBufferLength == 0){
+            delay(10)
+            //Log.d(TAG,"You're in the loop.")
+        }
+        imageReader.setOnImageAvailableListener(null,null)
         Log.d(TAG,"ImageReader -> width: ${size.width}, height: ${size.height}, Y-Buffer size: $yBufferLength ")
         roi = Rect(size.width/3,size.height/3,size.width/3,size.height/3)
 
