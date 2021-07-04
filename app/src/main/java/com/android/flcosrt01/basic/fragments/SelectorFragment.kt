@@ -100,7 +100,6 @@ class SelectorFragment : Fragment() {
                         CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE) ?: false
             }
 
-
             // Iterate over the list of cameras and return all the compatible ones
             cameraIds.forEach { id ->
                 val characteristics = cameraManager.getCameraCharacteristics(id)
@@ -112,6 +111,9 @@ class SelectorFragment : Fragment() {
                         CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)!!
                 val outputFormats = characteristics.get(
                         CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!.outputFormats
+                Log.d("FPS ranges",
+                    characteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES).contentToString()
+                ) // Print the available FPS for the camera.
                 // Try to get the output sizes - mact
                 val outputSizes = characteristics.get(
                     CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!.getOutputSizes(ImageFormat.YUV_420_888)

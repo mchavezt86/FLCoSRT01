@@ -232,11 +232,13 @@ class CameraFragment : Fragment() {
         session.setRepeatingRequest(captureRequest.build(), null, cameraHandler)
 
         // Try to get a first image from the ImageReader to get its buffer length
-        imageReader.setOnImageAvailableListener({ reader ->
-            val image = reader.acquireLatestImage()
-            yBufferLength = image.planes[0].buffer.remaining() //Buffer length
-            image.close()
-        },imageReaderHandler)
+        lifecycleScope.launch(Dispatchers.IO) {
+            imageReader.setOnImageAvailableListener({ reader ->
+                val image = reader.acquireLatestImage()
+                yBufferLength = image.planes[0].buffer.remaining() //Buffer length
+                image.close()
+            }, imageReaderHandler)
+        }
 
         /* Wait for the imageReader to get the buffer length */
         @Suppress("ControlFlowWithEmptyBody")
@@ -244,7 +246,12 @@ class CameraFragment : Fragment() {
             delay(10)
             //Log.d(TAG,"You're in the loop.")
         }
-        imageReader.setOnImageAvailableListener(null,null)
+        /* The setting of (null, null) for the imageReader listener throws an error on some phone
+        * models,thus we set an image listener which just closes the latest image */
+        imageReader.setOnImageAvailableListener({ reader ->
+            reader.acquireLatestImage().close()
+        },imageReaderHandler)
+        //imageReader.setOnImageAvailableListener(null,null)
         Log.d(TAG,"ImageReader -> width: ${size.width}, height: ${size.height}, Y-Buffer size: $yBufferLength ")
         roi = Rect(size.width/3,size.height/3,size.width/3,size.height/3)
 
@@ -265,7 +272,7 @@ class CameraFragment : Fragment() {
             // Perform I/O heavy operations in a different scope
             lifecycleScope.launch(Dispatchers.IO) {
                 // Flush any images left in the image reader
-                imageReader.acquireLatestImage().close()
+                imageReader.acquireLatestImage()?.close()
 
                 // Save the start time.
                 startTime = System.currentTimeMillis()
@@ -301,7 +308,9 @@ class CameraFragment : Fragment() {
 
                 /* When finished clean some variables, remove the ImageReader listener, print the
                 * calculated FPS and re-enable the capture button */
-                imageReader.setOnImageAvailableListener(null, imageReaderHandler)
+                imageReader.setOnImageAvailableListener({ reader ->
+                    reader.acquireLatestImage().close()
+                } , imageReaderHandler)
                 val totalTime = System.currentTimeMillis() - startTime
                 Log.d(TAG,"FPS: ${100000.0/totalTime}")
                 overlay.post(animationTask)
