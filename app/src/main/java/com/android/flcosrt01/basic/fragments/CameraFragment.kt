@@ -50,6 +50,7 @@ import com.example.android.camera.utils.getPreviewOutputSize
 import com.example.android.camera.utils.AutoFitSurfaceView
 import com.example.android.camera.utils.OrientationLiveData
 import com.android.flcosrt01.basic.CameraActivity
+import com.android.flcosrt01.basic.ProcessingClass
 import com.android.flcosrt01.basic.R
 import kotlinx.android.synthetic.main.fragment_camera.*
 import kotlinx.coroutines.*
@@ -148,6 +149,12 @@ class CameraFragment : Fragment() {
 
     /** Live data listener for changes in the device orientation relative to the camera */
     private lateinit var relativeOrientation: OrientationLiveData
+
+    /** Job variable to control multi-thread job */
+    private lateinit var savingMatJob : Job
+
+    /** Queue for storing QR data */
+    private val rxData = ConcurrentLinkedDeque<String>()
 
     override fun onCreateView(
             inflater: LayoutInflater,
@@ -302,7 +309,13 @@ class CameraFragment : Fragment() {
             it.isEnabled = false
             it.isClickable = false
 
+            // Flash animation.
             overlay.post(animationTask)
+
+            // Initialise the controlling job
+            savingMatJob = Job()
+
+            var readCounter = 0
 
             // Perform I/O heavy operations in a different scope
             lifecycleScope.launch(Dispatchers.IO) {
@@ -327,40 +340,47 @@ class CameraFragment : Fragment() {
             }
             /* Launch another thread to take the byteArrays from the queue and stores them as Mat
             * objects in the ConcurrentLinkedDeque roiMatQueue*/
-            lifecycleScope.launch(Dispatchers.Default) {
-                var readCounter = 0
-                while(readCounter < 100){
-                    val imgBytes = withContext(Dispatchers.IO){ bufferQueue.take() }
-                    val matImg = Mat(size.height,size.width,CvType.CV_8UC1)
-                    matImg.data().put(imgBytes,0,imgBytes.size)
-                    synchronized(roiMatQueue){
-                        roiMatQueue.add(Mat(matImg,roi)) //Add Mat using the ROI
+            lifecycleScope.launch(Dispatchers.Default + savingMatJob) {
+                //var readCounter = 0
+                while (true){ //readCounter < 100) {
+                    val imgBytes = withContext(Dispatchers.IO) { bufferQueue.take() }
+                    val matImg = Mat(size.height, size.width, CvType.CV_8UC1)
+                    matImg.data().put(imgBytes, 0, imgBytes.size)
+                    synchronized(roiMatQueue) {
+                        roiMatQueue.add(Mat(matImg, roi)) //Add Mat using the ROI
                         //roiMatQueue.add(matImg)
                     }
-                    Log.d(TAG,"Taking image $readCounter")
+                    Log.d(TAG, "Taking image $readCounter")
                     readCounter += 1
                 }
+            }
 
+            lifecycleScope.launch(Dispatchers.Default){
                 /* When finished clean some variables, remove the ImageReader listener, print the
                 * calculated FPS and re-enable the capture button */
+                while(rxData.size < 192){
+                    ProcessingClass.decodeQR(roiMatQueue.pollFirst(),rxData)
+                    Log.d(TAG,"Currently ${rxData.size} QRs")
+                }
                 imageReader.setOnImageAvailableListener({ reader ->
                     reader.acquireLatestImage().close()
                 } , imageReaderHandler)
                 val totalTime = System.currentTimeMillis() - startTime
-                Log.d(TAG,"FPS: ${100000.0/totalTime}")
+                //Log.d(TAG,"FPS: ${100000.0/totalTime}")
+                Log.d(TAG,"Total time : $totalTime")
                 overlay.post(animationTask)
                 imgCounter = 0
-                //imageQueue.clear()
                 bufferQueue.clear()
+                rxData.clear()
                 it.post {
                     it.isEnabled = true
                     it.isClickable = true
                 }
                 // Loop the roiMatQueue to save the files
-                Log.d(TAG,"Saving files...")
+                /*Log.d(TAG,"Saving files...")
                 while (roiMatQueue.peekFirst() != null){
                     saveImage(roiMatQueue.pollFirst()!!)
-                }
+                }*/
             }
         }
     }
