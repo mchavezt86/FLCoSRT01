@@ -19,6 +19,7 @@ package com.android.flcosrt01.basic.fragments
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.ImageFormat
+import android.graphics.Rect
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CameraMetadata
@@ -64,7 +65,8 @@ class SelectorFragment : Fragment() {
                     Navigation.findNavController(requireActivity(), R.id.fragment_container)
                             .navigate(
                                 SelectorFragmentDirections.actionSelectorToCamera(
-                                    item.cameraId, item.format, item.size.width,  item.size.height
+                                    item.cameraId, item.format, item.size.width, item.size.height,
+                                    item.zoom
                                 )
                             )
                 }
@@ -76,7 +78,12 @@ class SelectorFragment : Fragment() {
     companion object {
 
         /** Helper class used as a data holder for each selectable camera format item */
-        private data class FormatItem(val title: String, val cameraId: String, val format: Int, val size: Size)
+        private data class FormatItem(
+            val title: String,
+            val cameraId: String,
+            val format: Int,
+            val size: Size,
+            val zoom: Rect,) //Added by Miguel
 
         /** Helper function used to convert a lens orientation enum into a human-readable string */
         private fun lensOrientationString(value: Int) = when(value) {
@@ -117,13 +124,17 @@ class SelectorFragment : Fragment() {
                 // Try to get the output sizes - mact
                 val outputSizes = characteristics.get(
                     CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!.getOutputSizes(ImageFormat.YUV_420_888)
-                    //CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!.getOutputSizes(MediaRecorder::class.java)
+                // Sensor array size for calculating zoom
+                val w = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)!!.width()
+                val h = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)!!.height()
+                val zoom = calcZoom(w,h,4.0F)
+
                 outputSizes.forEach { size ->
                     // All cameras *must* support JPEG output so we don't need to check characteristics
                     // Replaced the JPEG output to YUV_420_288 - mact
                     availableCameras.add(
                         FormatItem(
-                            "$orientation JPEG ($id) $size", id, ImageFormat.YUV_420_888, size)
+                            "$orientation JPEG ($id) $size", id, ImageFormat.YUV_420_888, size, zoom)
                     )
 
                     // Return cameras that support RAW capability
@@ -132,7 +143,7 @@ class SelectorFragment : Fragment() {
                         outputFormats.contains(ImageFormat.RAW_SENSOR)) {
                         availableCameras.add(
                             FormatItem(
-                                "$orientation RAW ($id) $size", id, ImageFormat.RAW_SENSOR, size)
+                                "$orientation RAW ($id) $size", id, ImageFormat.RAW_SENSOR, size, zoom)
                         )
                     }
 
@@ -142,12 +153,23 @@ class SelectorFragment : Fragment() {
                         outputFormats.contains(ImageFormat.DEPTH_JPEG)) {
                         availableCameras.add(
                             FormatItem(
-                                "$orientation DEPTH ($id) $size", id, ImageFormat.DEPTH_JPEG, size)
+                                "$orientation DEPTH ($id) $size", id, ImageFormat.DEPTH_JPEG, size, zoom)
                         )
                     }
                 }
             }
             return availableCameras
+        }
+
+        private fun calcZoom(w: Int, h: Int, zoom: Float) : Rect{
+            val newZoom = zoom.coerceIn(1.0F,zoom)
+
+            val centerX = w/2
+            val centerY = h/2
+            val deltaX = ((0.5F * w) / newZoom ).toInt()
+            val deltaY = ((0.5F * h) / newZoom ).toInt()
+
+            return Rect(centerX - deltaX,centerY - deltaY,centerX + deltaX,centerY + deltaY)
         }
     }
 }

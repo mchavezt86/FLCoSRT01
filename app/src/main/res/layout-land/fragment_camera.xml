@@ -30,6 +30,13 @@
         android:layout_height="match_parent"
         android:foreground="@android:color/transparent" />
 
+    <View
+        android:id="@+id/roi_rect"
+        android:layout_width="180dp"
+        android:layout_height="180dp"
+        android:layout_gravity="center"
+        android:background="@drawable/roi_rectangle" />
+
     <ImageButton
         android:id="@+id/capture_button"
         android:layout_width="96dp"

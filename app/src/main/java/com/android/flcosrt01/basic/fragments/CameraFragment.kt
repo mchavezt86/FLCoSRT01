@@ -17,6 +17,7 @@
 package com.android.flcosrt01.basic.fragments
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.graphics.Color
 import android.graphics.ImageFormat
@@ -136,6 +137,9 @@ class CameraFragment : Fragment() {
     /** Overlay on top of the camera preview */
     private lateinit var overlay: View
 
+    /** ROI rectangle on top of the camera preview */
+    private lateinit var roiRect: View
+
     /** The [CameraDevice] that will be opened in this fragment */
     private lateinit var camera: CameraDevice
 
@@ -156,6 +160,7 @@ class CameraFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         overlay = view.findViewById(R.id.overlay)
         viewFinder = view.findViewById(R.id.view_finder)
+        roiRect = view.findViewById(R.id.roi_rect)
         capture_button.setOnApplyWindowInsetsListener { v, insets ->
             v.translationX = (-insets.systemWindowInsetRight).toFloat()
             v.translationY = (-insets.systemWindowInsetBottom).toFloat()
@@ -178,7 +183,28 @@ class CameraFragment : Fragment() {
                         viewFinder.display, characteristics, SurfaceHolder::class.java)
                 Log.d(TAG, "View finder size: ${viewFinder.width} x ${viewFinder.height}")
                 Log.d(TAG, "Selected preview size: $previewSize")
-                viewFinder.setAspectRatio(previewSize.width, previewSize.height)
+                //viewFinder.setAspectRatio(previewSize.width, previewSize.height)
+                viewFinder.setAspectRatio(args.width, args.height)
+
+                // Resize the ROI rectangle to one third of the height
+                roiRect.layoutParams.width = previewSize.height / 4
+                roiRect.layoutParams.height = previewSize.height / 4
+                //roiRect.x = (previewSize.height - roiRect.width).toFloat() / 2f
+                //roiRect.y = (previewSize.width - roiRect.width).toFloat() / 2f
+
+                // Depending on orientation the ROI view must be located accordingly
+                when(activity?.resources?.configuration?.orientation){
+                    1 -> {
+                        roiRect.x = (previewSize.height - roiRect.width).toFloat() / 2f
+                        roiRect.y = (previewSize.width - roiRect.width).toFloat() / 2f
+                    }
+                    2 -> {
+                        roiRect.y = (previewSize.height - roiRect.width).toFloat() / 2f
+                        roiRect.x = (previewSize.width - roiRect.width).toFloat() / 2f
+                    }
+                }
+                //Log.d(TAG,"Orientation: ${activity?.resources?.configuration?.orientation}")
+                //Log.d(TAG,"ROI: width = ${overlay.width / 3}, height = ${overlay.height / 3}")
 
                 // To ensure that size is set, initialize camera in the view's thread
                 view.post { initializeCamera() }
@@ -224,6 +250,9 @@ class CameraFragment : Fragment() {
                 CameraDevice.TEMPLATE_PREVIEW).apply {
                     addTarget(viewFinder.holder.surface)
                     addTarget(imageReader.surface)
+                    //Set Zoom
+                    set(CaptureRequest.SCALER_CROP_REGION,args.zoom)
+                    // Set Continuous Picture mode
                     set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
                 }
 
@@ -253,7 +282,13 @@ class CameraFragment : Fragment() {
         },imageReaderHandler)
         //imageReader.setOnImageAvailableListener(null,null)
         Log.d(TAG,"ImageReader -> width: ${size.width}, height: ${size.height}, Y-Buffer size: $yBufferLength ")
-        roi = Rect(size.width/3,size.height/3,size.width/3,size.height/3)
+        /* The ROI is defined by the resolution. x,y = screen half - half of roi.
+        *  The actual values of the ROI rectangle needed for OpenCV Mat requires width and height
+        * to be swap, Mat_x coordinate is y  and Mat_y is measured from the other end so its
+        * width - x - w */
+        roi = Rect(size.width/2 - size.height/8,
+            size.height - size.height/2 - size.height/8, //(size.height/2 + size.height/16),// - size.height/4),
+            size.height/4,size.height/4)
 
         /* Crate an ArrayBlockingQueue of ByteBuffers of size TOTAL_IMAGES. Check this constant
         * because it determines the amount of images the bufferQueue can store, while another
@@ -299,8 +334,8 @@ class CameraFragment : Fragment() {
                     val matImg = Mat(size.height,size.width,CvType.CV_8UC1)
                     matImg.data().put(imgBytes,0,imgBytes.size)
                     synchronized(roiMatQueue){
-                        //roiMatQueue.add(Mat(matImg,roi))
-                        roiMatQueue.add(matImg)
+                        roiMatQueue.add(Mat(matImg,roi)) //Add Mat using the ROI
+                        //roiMatQueue.add(matImg)
                     }
                     Log.d(TAG,"Taking image $readCounter")
                     readCounter += 1

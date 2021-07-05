@@ -76,6 +76,9 @@
         <argument
             android:name="height"
             app:argType="integer" />
+        <argument
+            android:name="zoom"
+            app:argType="android.graphics.Rect" />
 
     </fragment>
 
