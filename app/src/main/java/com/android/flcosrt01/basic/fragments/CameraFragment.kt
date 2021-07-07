@@ -355,17 +355,31 @@ class CameraFragment : Fragment() {
                 }
             }
 
-            lifecycleScope.launch(Dispatchers.Default){
+            lifecycleScope.launch(Dispatchers.Default) {
                 /* When finished clean some variables, remove the ImageReader listener, print the
                 * calculated FPS and re-enable the capture button */
-                while(rxData.size < 192){
-                    ProcessingClass.decodeQR(roiMatQueue.pollFirst(),rxData)
-                    Log.d(TAG,"Currently ${rxData.size} QRs")
+
+                while (rxData.size < 192) {
+                    val mat : Mat?
+                    synchronized(roiMatQueue){
+                        mat = roiMatQueue.pollFirst()
+                        ProcessingClass.decodeQR(mat, rxData)
+                    }
+                    //ProcessingClass.decodeQR(mat, rxData)
+                    delay(15)
+                    Log.d(TAG, "Currently ${rxData.size} QRs")
                 }
+
+                // Remove ImageReader listener and clean variables
                 imageReader.setOnImageAvailableListener({ reader ->
                     reader.acquireLatestImage().close()
                 } , imageReaderHandler)
-                val totalTime = System.currentTimeMillis() - startTime
+
+                /* Call the Reed Solomon Forward Error Correction (RS-FEC) function */
+                val result = ProcessingClass.reedSolomonFEC(rxData)
+                Log.d(TAG, "Result: $result")
+
+                val totalTime = System.currentTimeMillis() - startTime // Time duration
                 //Log.d(TAG,"FPS: ${100000.0/totalTime}")
                 Log.d(TAG,"Total time : $totalTime")
                 overlay.post(animationTask)
