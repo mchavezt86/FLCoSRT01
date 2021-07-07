@@ -361,7 +361,7 @@ class CameraFragment : Fragment() {
 
                 while (rxData.size < 192) {
                     val mat : Mat?
-                    synchronized(roiMatQueue){
+                    synchronized(roiMatQueue){ //Recheck: idea -> block decodeQR, remove delay
                         mat = roiMatQueue.pollFirst()
                         ProcessingClass.decodeQR(mat, rxData)
                     }

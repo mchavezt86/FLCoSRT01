@@ -23,6 +23,7 @@ import android.graphics.Rect
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CameraMetadata
+import android.hardware.camera2.params.StreamConfigurationMap
 import android.media.MediaRecorder
 import android.os.Bundle
 import android.util.Log
@@ -136,6 +137,9 @@ class SelectorFragment : Fragment() {
                         FormatItem(
                             "$orientation JPEG ($id) $size", id, ImageFormat.YUV_420_888, size, zoom)
                     )
+                    Log.d("Min Frame duration","$size: " +
+                            "${characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!
+                                .getOutputMinFrameDuration(ImageFormat.YUV_420_888,size)}")
 
                     // Return cameras that support RAW capability
                     if (capabilities.contains(
