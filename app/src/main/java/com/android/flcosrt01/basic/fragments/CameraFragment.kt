@@ -65,6 +65,7 @@ import java.util.concurrent.ArrayBlockingQueue
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.LinkedBlockingQueue
 import kotlin.RuntimeException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -347,7 +348,7 @@ class CameraFragment : Fragment() {
                     val matImg = Mat(size.height, size.width, CvType.CV_8UC1)
                     matImg.data().put(imgBytes, 0, imgBytes.size)
                     synchronized(roiMatQueue) {
-                        roiMatQueue.add(Mat(matImg, roi)) //Add Mat using the ROI
+                        roiMatQueue.add(Mat(matImg, roi)) //Add Mat using the ROI or LinkedBlockingQueue
                         //roiMatQueue.add(matImg)
                     }
                     Log.d(TAG, "Taking image $readCounter")
