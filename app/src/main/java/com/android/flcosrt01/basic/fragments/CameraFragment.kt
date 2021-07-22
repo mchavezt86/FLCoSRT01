@@ -79,11 +79,11 @@ class CameraFragment : Fragment() {
     /** Variables of the output of an ImageReader readings: length of the Y buffer */
     private var yBufferLength = 0
 
-    /** Hardcoded ROI */
+    /** ROI */
     private var roi : Rect? = null
 
     /** Queue for each Mat after applying the ROI mask.*/
-    private val roiMatQueue = ConcurrentLinkedDeque<Mat>()
+    //private val roiMatQueue = ConcurrentLinkedDeque<Mat>()
 
     /** AndroidX navigation arguments */
     private val args: CameraFragmentArgs by navArgs()
@@ -309,6 +309,7 @@ class CameraFragment : Fragment() {
         },imageReaderHandler)
 
         Log.d(TAG,"ImageReader -> width: ${size.width}, height: ${size.height}, Y-Buffer size: $yBufferLength ")
+        Log.d(TAG,"ROI -> width: ${roi!!.width()}, height: ${roi!!.height()}")
 
         /* The ROI is defined by the resolution. x,y = screen half - half of roi.
         *  The actual values of the ROI rectangle needed for OpenCV Mat requires width and height
@@ -322,6 +323,7 @@ class CameraFragment : Fragment() {
         * because it determines the amount of images the bufferQueue can store, while another
         * thread tries to read it */
         val bufferQueue = ArrayBlockingQueue<ByteArray>(TOTAL_IMAGES,true)
+        val roiMatQueue = ArrayBlockingQueue<Mat>(TOTAL_IMAGES,true)
 
         // Listen to the capture button
         capture_button.setOnClickListener {
@@ -367,10 +369,11 @@ class CameraFragment : Fragment() {
                     val imgBytes = withContext(Dispatchers.IO) { bufferQueue.take() }
                     val matImg = Mat(size.height, size.width, CvType.CV_8UC1)
                     matImg.data().put(imgBytes, 0, imgBytes.size)
-                    synchronized(roiMatQueue) {
+                    /*synchronized(roiMatQueue) {
                         roiMatQueue.add(Mat(matImg, roi)) //Add Mat using the ROI or LinkedBlockingQueue
                         //roiMatQueue.add(matImg)
-                    }
+                    }*/
+                    roiMatQueue.add(Mat(matImg,roi))
                     Log.d(TAG, "Taking image $readCounter")
                     readCounter += 1
                 }
@@ -381,13 +384,14 @@ class CameraFragment : Fragment() {
                 * calculated FPS and re-enable the capture button */
 
                 while (rxData.size < 192) {
-                    val mat : Mat?
-                    synchronized(roiMatQueue){ //Recheck: idea -> block decodeQR, remove delay
+                    //val mat : Mat?
+                    /*synchronized(roiMatQueue){ //Recheck: idea -> block decodeQR, remove delay
                         mat = roiMatQueue.pollFirst()
                         ProcessingClass.decodeQR(mat, rxData)
-                    }
-                    //ProcessingClass.decodeQR(mat, rxData)
-                    delay(15)
+                    }*/
+                    val mat = withContext(Dispatchers.IO){ roiMatQueue.take() }
+                    ProcessingClass.decodeQR(mat, rxData)
+                    //delay(15)
                     Log.d(TAG, "Currently ${rxData.size} QRs")
                 }
 
