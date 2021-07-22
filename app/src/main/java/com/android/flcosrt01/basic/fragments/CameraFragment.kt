@@ -80,7 +80,7 @@ class CameraFragment : Fragment() {
     private var yBufferLength = 0
 
     /** Hardcoded ROI */
-    private lateinit var roi : Rect
+    private var roi : Rect? = null
 
     /** Queue for each Mat after applying the ROI mask.*/
     private val roiMatQueue = ConcurrentLinkedDeque<Mat>()
@@ -283,20 +283,40 @@ class CameraFragment : Fragment() {
             delay(10)
             //Log.d(TAG,"You're in the loop.")
         }
+
+        /* Try to find the ROI */
+        lifecycleScope.launch(Dispatchers.IO) {
+            imageReader.setOnImageAvailableListener({ reader ->
+                val image = reader.acquireLatestImage()
+                val byteArray = ByteArray(yBufferLength)
+                image.planes[0].buffer.get(byteArray,0,yBufferLength)
+                image.close()
+                val matImg = Mat(size.height, size.width, CvType.CV_8UC1)
+                matImg.data().put(byteArray, 0, byteArray.size)
+                if (roi == null) {
+                    roi = ProcessingClass.detectROI(matImg)
+                }
+            }, imageReaderHandler)
+        }
+        while(roi == null){
+            delay(10)
+        }
+
         /* The setting of (null, null) for the imageReader listener throws an error on some phone
         * models,thus we set an image listener which just closes the latest image */
         imageReader.setOnImageAvailableListener({ reader ->
             reader.acquireLatestImage().close()
         },imageReaderHandler)
-        //imageReader.setOnImageAvailableListener(null,null)
+
         Log.d(TAG,"ImageReader -> width: ${size.width}, height: ${size.height}, Y-Buffer size: $yBufferLength ")
+
         /* The ROI is defined by the resolution. x,y = screen half - half of roi.
         *  The actual values of the ROI rectangle needed for OpenCV Mat requires width and height
         * to be swap, Mat_x coordinate is y  and Mat_y is measured from the other end so its
         * width - x - w */
-        roi = Rect(size.width/2 - size.height/8,
+        /*roi = Rect(size.width/2 - size.height/8,
             size.height - size.height/2 - size.height/8, //(size.height/2 + size.height/16),// - size.height/4),
-            size.height/4,size.height/4)
+            size.height/4,size.height/4)*/
 
         /* Crate an ArrayBlockingQueue of ByteBuffers of size TOTAL_IMAGES. Check this constant
         * because it determines the amount of images the bufferQueue can store, while another
