@@ -39,6 +39,8 @@ import android.view.Surface
 import android.view.SurfaceHolder
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.drawable.toDrawable
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -140,7 +142,10 @@ class CameraFragment : Fragment() {
     private lateinit var overlay: View
 
     /** ROI rectangle on top of the camera preview */
-    private lateinit var roiRect: View
+    //private lateinit var roiRect: View
+
+    /** ROI rectangle on top of the camera preview */
+    private lateinit var roiRectView : View
 
     /** The [CameraDevice] that will be opened in this fragment */
     private lateinit var camera: CameraDevice
@@ -168,7 +173,8 @@ class CameraFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         overlay = view.findViewById(R.id.overlay)
         viewFinder = view.findViewById(R.id.view_finder)
-        roiRect = view.findViewById(R.id.roi_rect)
+        //roiRect = view.findViewById(R.id.roi_rect)
+        roiRectView = view.findViewById(R.id.roirect)
         capture_button.setOnApplyWindowInsetsListener { v, insets ->
             v.translationX = (-insets.systemWindowInsetRight).toFloat()
             v.translationY = (-insets.systemWindowInsetBottom).toFloat()
@@ -195,13 +201,11 @@ class CameraFragment : Fragment() {
                 viewFinder.setAspectRatio(args.width, args.height)
 
                 // Resize the ROI rectangle to one third of the height
-                roiRect.layoutParams.width = previewSize.height / 4
-                roiRect.layoutParams.height = previewSize.height / 4
-                //roiRect.x = (previewSize.height - roiRect.width).toFloat() / 2f
-                //roiRect.y = (previewSize.width - roiRect.width).toFloat() / 2f
+                /*roiRect.layoutParams.width = previewSize.height / 4
+                roiRect.layoutParams.height = previewSize.height / 4*/
 
                 // Depending on orientation the ROI view must be located accordingly
-                when(activity?.resources?.configuration?.orientation){
+                /*when(activity?.resources?.configuration?.orientation){
                     1 -> {
                         roiRect.x = (previewSize.height - roiRect.width).toFloat() / 2f
                         roiRect.y = (previewSize.width - roiRect.width).toFloat() / 2f
@@ -210,7 +214,7 @@ class CameraFragment : Fragment() {
                         roiRect.y = (previewSize.height - roiRect.width).toFloat() / 2f
                         roiRect.x = (previewSize.width - roiRect.width).toFloat() / 2f
                     }
-                }
+                }*/
                 //Log.d(TAG,"Orientation: ${activity?.resources?.configuration?.orientation}")
                 //Log.d(TAG,"ROI: width = ${overlay.width / 3}, height = ${overlay.height / 3}")
 
@@ -310,6 +314,21 @@ class CameraFragment : Fragment() {
 
         Log.d(TAG,"ImageReader -> width: ${size.width}, height: ${size.height}, Y-Buffer size: $yBufferLength ")
         Log.d(TAG,"ROI -> width: ${roi!!.width()}, height: ${roi!!.height()}")
+
+        /*Set the ROI View parameters to be displayed in the camera surface*/
+        roiRectView.x = (roi!!.x() * viewFinder.width / size.width).toFloat()
+        roiRectView.y = (roi!!.y() * viewFinder.height / size.height).toFloat()
+        roiRectView.layoutParams = FrameLayout.LayoutParams(
+            roi!!.width() * viewFinder.width / size.width,
+            roi!!.height() * viewFinder.height / size.height
+        )
+        /* Show the ROI and the capture button */
+        roiRectView.visibility = View.VISIBLE
+        capture_button.visibility = View.VISIBLE
+
+        /** NOTE: Here should go the code to implement a new capture request based on the AE/AF
+         * regions. This needs to be implemented accordingly to get the lowest AE value. Interesting
+         * if all the phone cameras work the same. */
 
         /* The ROI is defined by the resolution. x,y = screen half - half of roi.
         *  The actual values of the ROI rectangle needed for OpenCV Mat requires width and height
