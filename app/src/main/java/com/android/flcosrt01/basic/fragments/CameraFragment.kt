@@ -316,11 +316,11 @@ class CameraFragment : Fragment() {
         Log.d(TAG,"ROI -> width: ${roi!!.width()}, height: ${roi!!.height()}")
 
         /*Set the ROI View parameters to be displayed in the camera surface*/
-        roiRectView.x = (roi!!.x() * viewFinder.width / size.width).toFloat()
-        roiRectView.y = (roi!!.y() * viewFinder.height / size.height).toFloat()
+        roiRectView.y = (roi!!.x() * viewFinder.height / size.width).toFloat()
+        roiRectView.x = (viewFinder.width- (roi!!.y() + roi!!.height()) * viewFinder.width / size.height).toFloat()
         roiRectView.layoutParams = FrameLayout.LayoutParams(
-            roi!!.width() * viewFinder.width / size.width,
-            roi!!.height() * viewFinder.height / size.height
+            roi!!.height() * viewFinder.width / size.height,
+            roi!!.width() * viewFinder.height / size.width
         )
         /* Show the ROI and the capture button */
         roiRectView.visibility = View.VISIBLE
