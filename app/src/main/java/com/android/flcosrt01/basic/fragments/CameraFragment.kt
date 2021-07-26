@@ -432,7 +432,7 @@ class CameraFragment : Fragment() {
                 overlay.post(animationTask)
 
                 // Add an Alert Dialog to show results + execution time
-                val resultDialog = ResultDialogFragment().changeText(result)
+                val resultDialog = ResultDialogFragment().changeText(result, totalTime)
                 resultDialog.show()
 
                 // Clear some variables
@@ -546,9 +546,10 @@ class CameraFragment : Fragment() {
                 builder.create()
             } ?: throw IllegalStateException("Activity cannot be null")
         }*/
-        fun changeText(text : String) : Dialog {
+        fun changeText(text : String, time : Long) : Dialog {
             val builder = AlertDialog.Builder(activity)
             builder.setMessage(text)
+            builder.setTitle(time.toString())
             return  builder.create()
         }
     }
