@@ -29,6 +29,7 @@ import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.CaptureResult
+import android.hardware.camera2.params.MeteringRectangle
 import android.media.Image
 import android.media.ImageReader
 import android.os.Bundle
@@ -332,6 +333,26 @@ class CameraFragment : Fragment() {
         /** NOTE: Here should go the code to implement a new capture request based on the AE/AF
          * regions. This needs to be implemented accordingly to get the lowest AE value. Interesting
          * if all the phone cameras work the same. */
+        val newCaptureRequest = camera.createCaptureRequest(
+            CameraDevice.TEMPLATE_PREVIEW).apply {
+            addTarget(viewFinder.holder.surface)
+            addTarget(imageReader.surface)
+            //Set Zoom
+            set(CaptureRequest.SCALER_CROP_REGION,args.zoom)
+            // Set Continuous Picture mode
+            set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
+            // AE to lowest value
+            set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,args.aeLow)
+            // Set AE and AF regions
+            set(CaptureRequest.CONTROL_AE_REGIONS,arrayOf(MeteringRectangle(args.zoom,
+                MeteringRectangle.METERING_WEIGHT_MAX-1)))
+            set(CaptureRequest.CONTROL_AF_REGIONS, arrayOf(MeteringRectangle(args.zoom,
+                MeteringRectangle.METERING_WEIGHT_MAX-1)))
+        }
+
+        // Stop and restart the camera session with new capture requests
+        session.stopRepeating()
+        session.setRepeatingRequest(newCaptureRequest.build(), null, cameraHandler)
 
         /* The ROI is defined by the resolution. x,y = screen half - half of roi.
         *  The actual values of the ROI rectangle needed for OpenCV Mat requires width and height

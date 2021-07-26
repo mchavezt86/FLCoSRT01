@@ -67,7 +67,7 @@ class SelectorFragment : Fragment() {
                             .navigate(
                                 SelectorFragmentDirections.actionSelectorToCamera(
                                     item.cameraId, item.format, item.size.width, item.size.height,
-                                    item.zoom
+                                    item.zoom, item.aeLow
                                 )
                             )
                 }
@@ -84,7 +84,8 @@ class SelectorFragment : Fragment() {
             val cameraId: String,
             val format: Int,
             val size: Size,
-            val zoom: Rect,) //Added by Miguel
+            val zoom: Rect, // Added by Miguel
+            val aeLow: Int) // Added by Miguel
 
         /** Helper function used to convert a lens orientation enum into a human-readable string */
         private fun lensOrientationString(value: Int) = when(value) {
@@ -129,13 +130,15 @@ class SelectorFragment : Fragment() {
                 val w = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)!!.width()
                 val h = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)!!.height()
                 val zoom = calcZoom(w,h,4.0F)
+                // AE range
+                val aeRange = characteristics.get(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE)!!
 
                 outputSizes.forEach { size ->
                     // All cameras *must* support JPEG output so we don't need to check characteristics
                     // Replaced the JPEG output to YUV_420_288 - mact
                     availableCameras.add(
                         FormatItem(
-                            "$orientation JPEG ($id) $size", id, ImageFormat.YUV_420_888, size, zoom)
+                            "$orientation JPEG ($id) $size", id, ImageFormat.YUV_420_888, size, zoom, aeRange.lower)
                     )
                     Log.d("Min Frame duration","$size: " +
                             "${characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!
@@ -147,7 +150,7 @@ class SelectorFragment : Fragment() {
                         outputFormats.contains(ImageFormat.RAW_SENSOR)) {
                         availableCameras.add(
                             FormatItem(
-                                "$orientation RAW ($id) $size", id, ImageFormat.RAW_SENSOR, size, zoom)
+                                "$orientation RAW ($id) $size", id, ImageFormat.RAW_SENSOR, size, zoom, aeRange.lower)
                         )
                     }
 
@@ -157,7 +160,7 @@ class SelectorFragment : Fragment() {
                         outputFormats.contains(ImageFormat.DEPTH_JPEG)) {
                         availableCameras.add(
                             FormatItem(
-                                "$orientation DEPTH ($id) $size", id, ImageFormat.DEPTH_JPEG, size, zoom)
+                                "$orientation DEPTH ($id) $size", id, ImageFormat.DEPTH_JPEG, size, zoom, aeRange.lower)
                         )
                     }
                 }
