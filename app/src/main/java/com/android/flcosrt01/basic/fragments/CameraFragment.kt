@@ -18,6 +18,8 @@ package com.android.flcosrt01.basic.fragments
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlertDialog
+import android.app.Dialog
 import android.content.Context
 import android.graphics.Color
 import android.graphics.ImageFormat
@@ -42,6 +44,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.drawable.toDrawable
+import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
@@ -427,6 +430,12 @@ class CameraFragment : Fragment() {
                 //Log.d(TAG,"FPS: ${100000.0/totalTime}")
                 Log.d(TAG,"Total time : $totalTime")
                 overlay.post(animationTask)
+
+                // Add an Alert Dialog to show results + execution time
+                val resultDialog = ResultDialogFragment().changeText(result)
+                resultDialog.show()
+
+                // Clear some variables
                 imgCounter = 0
                 bufferQueue.clear()
                 rxData.clear()
@@ -524,6 +533,24 @@ class CameraFragment : Fragment() {
         super.onDestroy()
         cameraThread.quitSafely()
         imageReaderThread.quitSafely()
+    }
+
+    /** Dialog fragment to display the results FPS and decoded text */
+    /* Then this should be extended to include a scheme of restaurants and detailed information and
+    * the Intent call to Google Maps */
+    class ResultDialogFragment : DialogFragment(){
+        /*override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+            return activity?.let{
+                // Use the Builder class for convenient dialog construction
+                val builder = AlertDialog.Builder(it)
+                builder.create()
+            } ?: throw IllegalStateException("Activity cannot be null")
+        }*/
+        fun changeText(text : String) : Dialog {
+            val builder = AlertDialog.Builder(activity)
+            builder.setMessage(text)
+            return  builder.create()
+        }
     }
 
     companion object {
