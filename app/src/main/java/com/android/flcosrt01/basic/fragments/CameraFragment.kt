@@ -453,8 +453,10 @@ class CameraFragment : Fragment() {
                 overlay.post(animationTask)
 
                 // Add an Alert Dialog to show results + execution time
-                val resultDialog = ResultDialogFragment().changeText(result, totalTime)
-                resultDialog.show()
+                val resultDialog = ResultDialogFragment()
+                resultDialog.changeText(result, totalTime)
+                //resultDialog.show(requireParentFragment().parentFragmentManager,"result")
+                resultDialog.show(activity?.supportFragmentManager!!,"result")
 
                 // Clear some variables
                 imgCounter = 0
@@ -559,19 +561,25 @@ class CameraFragment : Fragment() {
     /** Dialog fragment to display the results FPS and decoded text */
     /* Then this should be extended to include a scheme of restaurants and detailed information and
     * the Intent call to Google Maps */
-    class ResultDialogFragment : DialogFragment(){
-        /*override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+    class ResultDialogFragment : DialogFragment() {
+        private var result = "*"
+        private var execTime = 0L
+        override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
             return activity?.let{
                 // Use the Builder class for convenient dialog construction
                 val builder = AlertDialog.Builder(it)
+                builder.setMessage(result)
+                builder.setTitle(execTime.toString())
                 builder.create()
             } ?: throw IllegalStateException("Activity cannot be null")
-        }*/
-        fun changeText(text : String, time : Long) : Dialog {
-            val builder = AlertDialog.Builder(activity)
+        }
+        fun changeText(text : String, time : Long) {
+            /*val builder = AlertDialog.Builder(activity)
             builder.setMessage(text)
             builder.setTitle(time.toString())
-            return  builder.create()
+            return  builder.create()*/
+            result = text
+            execTime = time
         }
     }
 

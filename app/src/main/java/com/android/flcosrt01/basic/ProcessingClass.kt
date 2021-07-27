@@ -183,7 +183,7 @@ class ProcessingClass {
             val binSize = mat.size().height()/2-1 //bin size for the binarisation
             //Constants for the area size
             val minArea = (mat.size().area()/50) //> 2% of total screen
-            val maxArea = (mat.size().area()/12) //< 8% of total screen
+            val maxArea = (mat.size().area()/5) //< 8% of total screen
             //Other variables
             val bin = Mat() //Mat for binarisation result
             val contours = MatVector() /*Contour detection returns a Mat Vector*/
