@@ -330,6 +330,9 @@ class CameraFragment : Fragment() {
         roiRectView.visibility = View.VISIBLE
         capture_button.visibility = View.VISIBLE
 
+        /* Calculate AE/AF rectangle */
+        val regionAEAF = ProcessingClass.scaleRect(args.zoom, size, roi!!)
+
         /** NOTE: Here should go the code to implement a new capture request based on the AE/AF
          * regions. This needs to be implemented accordingly to get the lowest AE value. Interesting
          * if all the phone cameras work the same. */
@@ -344,9 +347,9 @@ class CameraFragment : Fragment() {
             // AE to lowest value
             set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,args.aeLow)
             // Set AE and AF regions
-            set(CaptureRequest.CONTROL_AE_REGIONS,arrayOf(MeteringRectangle(args.zoom,
+            set(CaptureRequest.CONTROL_AE_REGIONS,arrayOf(MeteringRectangle(regionAEAF,
                 MeteringRectangle.METERING_WEIGHT_MAX-1)))
-            set(CaptureRequest.CONTROL_AF_REGIONS, arrayOf(MeteringRectangle(args.zoom,
+            set(CaptureRequest.CONTROL_AF_REGIONS, arrayOf(MeteringRectangle(regionAEAF,
                 MeteringRectangle.METERING_WEIGHT_MAX-1)))
         }
 
