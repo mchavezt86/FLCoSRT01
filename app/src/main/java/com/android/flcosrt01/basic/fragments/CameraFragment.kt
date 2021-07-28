@@ -270,6 +270,13 @@ class CameraFragment : Fragment() {
                     set(CaptureRequest.SCALER_CROP_REGION,args.zoom)
                     // Set Continuous Picture mode
                     set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
+                    // AE to lowest value
+                    set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,args.aeLow)
+                    // Set AE and AF regions
+                    set(CaptureRequest.CONTROL_AE_REGIONS,arrayOf(MeteringRectangle(args.zoom,
+                        MeteringRectangle.METERING_WEIGHT_MAX-1)))
+                    set(CaptureRequest.CONTROL_AF_REGIONS, arrayOf(MeteringRectangle(args.zoom,
+                        MeteringRectangle.METERING_WEIGHT_MAX-1)))
                 }
 
         // This will keep sending the capture request as frequently as possible until the
