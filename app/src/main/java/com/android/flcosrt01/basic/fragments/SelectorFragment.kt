@@ -129,13 +129,15 @@ class SelectorFragment : Fragment() {
                 // Sensor array size for calculating zoom
                 val w = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)!!.width()
                 val h = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)!!.height()
-                val zoom = calcZoom(w,h,4.0F)
+                //val zoom = calcZoom(w,h,4.0F)
                 // AE range
                 val aeRange = characteristics.get(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE)!!
 
                 outputSizes.forEach { size ->
                     // All cameras *must* support JPEG output so we don't need to check characteristics
                     // Replaced the JPEG output to YUV_420_288 - mact
+                    /* Include zoom for each size to be scaled */
+                    val zoom = scaleZoom(w,h,6.0F,size)
                     availableCameras.add(
                         FormatItem(
                             "$orientation JPEG ($id) $size", id, ImageFormat.YUV_420_888, size, zoom, aeRange.lower)
@@ -175,6 +177,17 @@ class SelectorFragment : Fragment() {
             val centerY = h/2
             val deltaX = ((0.5F * w) / newZoom ).toInt()
             val deltaY = ((0.5F * h) / newZoom ).toInt()
+
+            return Rect(centerX - deltaX,centerY - deltaY,centerX + deltaX,centerY + deltaY)
+        }
+
+        private fun scaleZoom(w: Int, h: Int, zoom: Float, size: Size) : Rect{
+            val newZoom = zoom.coerceIn(1.0F,zoom)
+
+            val centerX = w/2
+            val centerY = h/2
+            val deltaX = ((0.5F * w) / newZoom ).toInt()
+            val deltaY = ((0.5F * w * size.height / size.width) / newZoom ).toInt()
 
             return Rect(centerX - deltaX,centerY - deltaY,centerX + deltaX,centerY + deltaY)
         }

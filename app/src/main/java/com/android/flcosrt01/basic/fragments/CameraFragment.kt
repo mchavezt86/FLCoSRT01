@@ -277,6 +277,10 @@ class CameraFragment : Fragment() {
                         MeteringRectangle.METERING_WEIGHT_MAX-1)))
                     set(CaptureRequest.CONTROL_AF_REGIONS, arrayOf(MeteringRectangle(args.zoom,
                         MeteringRectangle.METERING_WEIGHT_MAX-1)))
+                /* Control Mode to auto + AF to Continuous + AE to Auto */
+                set(CaptureRequest.CONTROL_MODE,CaptureRequest.CONTROL_MODE_AUTO)
+                set(CaptureRequest.CONTROL_AF_MODE,CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
+                set(CaptureRequest.CONTROL_AE_MODE,CaptureRequest.CONTROL_AE_MODE_ON)
                 }
 
         // This will keep sending the capture request as frequently as possible until the
@@ -344,7 +348,7 @@ class CameraFragment : Fragment() {
          * regions. This needs to be implemented accordingly to get the lowest AE value. Interesting
          * if all the phone cameras work the same. */
         val newCaptureRequest = camera.createCaptureRequest(
-            CameraDevice.TEMPLATE_PREVIEW).apply {
+            CameraDevice.TEMPLATE_RECORD).apply {
             addTarget(viewFinder.holder.surface)
             addTarget(imageReader.surface)
             //Set Zoom
@@ -354,10 +358,14 @@ class CameraFragment : Fragment() {
             // AE to lowest value
             set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,args.aeLow)
             // Set AE and AF regions
-            set(CaptureRequest.CONTROL_AE_REGIONS,arrayOf(MeteringRectangle(regionAEAF,
+            set(CaptureRequest.CONTROL_AE_REGIONS,arrayOf(MeteringRectangle(args.zoom,
                 MeteringRectangle.METERING_WEIGHT_MAX-1)))
             set(CaptureRequest.CONTROL_AF_REGIONS, arrayOf(MeteringRectangle(regionAEAF,
                 MeteringRectangle.METERING_WEIGHT_MAX-1)))
+            /* Control Mode to auto + AF to Continuous + AE to Auto */
+            set(CaptureRequest.CONTROL_MODE,CaptureRequest.CONTROL_MODE_AUTO)
+            set(CaptureRequest.CONTROL_AF_MODE,CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
+            set(CaptureRequest.CONTROL_AE_MODE,CaptureRequest.CONTROL_AE_MODE_ON)
         }
 
         // Stop and restart the camera session with new capture requests
