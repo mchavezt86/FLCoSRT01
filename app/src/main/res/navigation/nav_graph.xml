@@ -79,6 +79,9 @@
         <argument
             android:name="zoom"
             app:argType="android.graphics.Rect" />
+        <argument
+            android:name="ae_low"
+            app:argType="integer" />
 
     </fragment>
 

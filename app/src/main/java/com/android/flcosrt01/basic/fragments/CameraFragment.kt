@@ -18,6 +18,8 @@ package com.android.flcosrt01.basic.fragments
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlertDialog
+import android.app.Dialog
 import android.content.Context
 import android.graphics.Color
 import android.graphics.ImageFormat
@@ -27,6 +29,7 @@ import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.CaptureResult
+import android.hardware.camera2.params.MeteringRectangle
 import android.media.Image
 import android.media.ImageReader
 import android.os.Bundle
@@ -42,6 +45,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.drawable.toDrawable
+import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
@@ -267,6 +271,17 @@ class CameraFragment : Fragment() {
                     set(CaptureRequest.SCALER_CROP_REGION,args.zoom)
                     // Set Continuous Picture mode
                     set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
+                    // AE to lowest value
+                    set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,args.aeLow)
+                    // Set AE and AF regions
+                    set(CaptureRequest.CONTROL_AE_REGIONS,arrayOf(MeteringRectangle(args.zoom,
+                        MeteringRectangle.METERING_WEIGHT_MAX-1)))
+                    set(CaptureRequest.CONTROL_AF_REGIONS, arrayOf(MeteringRectangle(args.zoom,
+                        MeteringRectangle.METERING_WEIGHT_MAX-1)))
+                /* Control Mode to auto + AF to Continuous + AE to Auto */
+                set(CaptureRequest.CONTROL_MODE,CaptureRequest.CONTROL_MODE_AUTO)
+                set(CaptureRequest.CONTROL_AF_MODE,CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
+                set(CaptureRequest.CONTROL_AE_MODE,CaptureRequest.CONTROL_AE_MODE_ON)
                 }
 
         // This will keep sending the capture request as frequently as possible until the
@@ -327,9 +342,36 @@ class CameraFragment : Fragment() {
         roiRectView.visibility = View.VISIBLE
         capture_button.visibility = View.VISIBLE
 
+        /* Calculate AE/AF rectangle */
+        val regionAEAF = ProcessingClass.scaleRect(args.zoom, size, roi!!)
+
         /** NOTE: Here should go the code to implement a new capture request based on the AE/AF
          * regions. This needs to be implemented accordingly to get the lowest AE value. Interesting
          * if all the phone cameras work the same. */
+        val newCaptureRequest = camera.createCaptureRequest(
+            CameraDevice.TEMPLATE_RECORD).apply {
+            addTarget(viewFinder.holder.surface)
+            addTarget(imageReader.surface)
+            //Set Zoom
+            set(CaptureRequest.SCALER_CROP_REGION,args.zoom)
+            // Set Continuous Picture mode
+            set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
+            // AE to lowest value
+            set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,args.aeLow)
+            // Set AE and AF regions
+            set(CaptureRequest.CONTROL_AE_REGIONS,arrayOf(MeteringRectangle(args.zoom,
+                MeteringRectangle.METERING_WEIGHT_MAX-1)))
+            set(CaptureRequest.CONTROL_AF_REGIONS, arrayOf(MeteringRectangle(regionAEAF,
+                MeteringRectangle.METERING_WEIGHT_MAX-1)))
+            /* Control Mode to auto + AF to Continuous + AE to Auto */
+            set(CaptureRequest.CONTROL_MODE,CaptureRequest.CONTROL_MODE_AUTO)
+            set(CaptureRequest.CONTROL_AF_MODE,CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
+            set(CaptureRequest.CONTROL_AE_MODE,CaptureRequest.CONTROL_AE_MODE_ON)
+        }
+
+        // Stop and restart the camera session with new capture requests
+        session.stopRepeating()
+        session.setRepeatingRequest(newCaptureRequest.build(), null, cameraHandler)
 
         /* The ROI is defined by the resolution. x,y = screen half - half of roi.
         *  The actual values of the ROI rectangle needed for OpenCV Mat requires width and height
@@ -432,6 +474,14 @@ class CameraFragment : Fragment() {
                 //Log.d(TAG,"FPS: ${100000.0/totalTime}")
                 Log.d(TAG,"Total time : $totalTime")
                 overlay.post(animationTask)
+
+                // Add an Alert Dialog to show results + execution time
+                val resultDialog = ResultDialogFragment()
+                resultDialog.changeText(result, totalTime)
+                //resultDialog.show(requireParentFragment().parentFragmentManager,"result")
+                resultDialog.show(activity?.supportFragmentManager!!,"result")
+
+                // Clear some variables
                 imgCounter = 0
                 bufferQueue.clear()
                 rxData.clear()
@@ -529,6 +579,31 @@ class CameraFragment : Fragment() {
         super.onDestroy()
         cameraThread.quitSafely()
         imageReaderThread.quitSafely()
+    }
+
+    /** Dialog fragment to display the results FPS and decoded text */
+    /* Then this should be extended to include a scheme of restaurants and detailed information and
+    * the Intent call to Google Maps */
+    class ResultDialogFragment : DialogFragment() {
+        private var result = "*"
+        private var execTime = 0L
+        override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+            return activity?.let{
+                // Use the Builder class for convenient dialog construction
+                val builder = AlertDialog.Builder(it)
+                builder.setMessage(result)
+                builder.setTitle(execTime.toString())
+                builder.create()
+            } ?: throw IllegalStateException("Activity cannot be null")
+        }
+        fun changeText(text : String, time : Long) {
+            /*val builder = AlertDialog.Builder(activity)
+            builder.setMessage(text)
+            builder.setTitle(time.toString())
+            return  builder.create()*/
+            result = text
+            execTime = time
+        }
     }
 
     companion object {
