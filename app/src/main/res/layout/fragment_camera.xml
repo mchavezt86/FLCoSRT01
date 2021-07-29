@@ -14,8 +14,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -33,12 +32,12 @@
         android:background="@drawable/roi_rectangle" />
         -->
 
+
     <View
         android:id="@+id/overlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:foreground="@android:color/transparent" />
-
 
     <ImageButton
         android:id="@+id/capture_button"
@@ -56,4 +55,12 @@
         android:layout_height="0dp"
         android:background="@drawable/emptyrect"
         android:visibility="invisible" />
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:translationX="20dp"
+        android:translationY="10dp" />
 </FrameLayout>

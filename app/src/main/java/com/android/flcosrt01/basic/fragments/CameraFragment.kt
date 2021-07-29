@@ -180,6 +180,7 @@ class CameraFragment : Fragment() {
             v.translationY = (-insets.systemWindowInsetBottom).toFloat()
             insets.consumeSystemWindowInsets()
         }
+        progressBar.max = ProcessingClass.RS_DATA_SIZE
 
         viewFinder.holder.addCallback(object : SurfaceHolder.Callback {
             override fun surfaceDestroyed(holder: SurfaceHolder) = Unit
@@ -359,6 +360,9 @@ class CameraFragment : Fragment() {
 
             var readCounter = 0
 
+            // Start the Progress Bar to 0
+            progressBar
+
             // Perform I/O heavy operations in a different scope
             lifecycleScope.launch(Dispatchers.IO) {
                 // Flush any images left in the image reader
@@ -411,7 +415,8 @@ class CameraFragment : Fragment() {
                     val mat = withContext(Dispatchers.IO){ roiMatQueue.take() }
                     ProcessingClass.decodeQR(mat, rxData)
                     //delay(15)
-                    Log.d(TAG, "Currently ${rxData.size} QRs")
+                    //Log.d(TAG, "Currently ${rxData.size} QRs")
+                    progressBar.progress = rxData.size
                 }
 
                 // Remove ImageReader listener and clean variables

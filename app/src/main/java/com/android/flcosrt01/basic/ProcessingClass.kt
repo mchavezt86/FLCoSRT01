@@ -24,7 +24,7 @@ class ProcessingClass {
         private lateinit var qrString : String
 
         //Sizes for Reed Solomon Encoder
-        private const val RS_DATA_SIZE = 191
+        const val RS_DATA_SIZE = 191
         private const val RS_PARITY_SIZE = 64
         private const val RS_TOTAL_SIZE = 255
         //Number of bytes in a QR code, version 1: 17 bytes
