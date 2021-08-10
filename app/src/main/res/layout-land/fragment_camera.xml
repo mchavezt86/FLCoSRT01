@@ -61,6 +61,8 @@
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:progressBackgroundTint="#3F51B5"
         android:translationX="20dp"
-        android:translationY="10dp" />
+        android:translationY="10dp"
+        android:visibility="visible" />
 </FrameLayout>

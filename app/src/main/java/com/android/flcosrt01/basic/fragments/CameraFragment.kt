@@ -307,15 +307,24 @@ class CameraFragment : Fragment() {
         /* Try to find the ROI */
         lifecycleScope.launch(Dispatchers.IO) {
             imageReader.setOnImageAvailableListener({ reader ->
-                val image = reader.acquireLatestImage()
-                val byteArray = ByteArray(yBufferLength)
+                /*val image = */reader.acquireLatestImage()?.let {
+                    val byteArray = ByteArray(yBufferLength)
+                    it.planes[0].buffer.get(byteArray,0,yBufferLength)
+                    it.close()
+                    val matImg = Mat(size.height, size.width, CvType.CV_8UC1)
+                    matImg.data().put(byteArray, 0, byteArray.size)
+                    if (roi == null) {
+                        roi = ProcessingClass.detectROI(matImg)
+                    }
+                }
+                /*val byteArray = ByteArray(yBufferLength)
                 image.planes[0].buffer.get(byteArray,0,yBufferLength)
                 image.close()
                 val matImg = Mat(size.height, size.width, CvType.CV_8UC1)
                 matImg.data().put(byteArray, 0, byteArray.size)
                 if (roi == null) {
                     roi = ProcessingClass.detectROI(matImg)
-                }
+                }*/
             }, imageReaderHandler)
         }
         while(roi == null){
@@ -325,7 +334,7 @@ class CameraFragment : Fragment() {
         /* The setting of (null, null) for the imageReader listener throws an error on some phone
         * models,thus we set an image listener which just closes the latest image */
         imageReader.setOnImageAvailableListener({ reader ->
-            reader.acquireLatestImage().close()
+            reader.acquireLatestImage()?.close()
         },imageReaderHandler)
 
         Log.d(TAG,"ImageReader -> width: ${size.width}, height: ${size.height}, Y-Buffer size: $yBufferLength ")
@@ -458,12 +467,12 @@ class CameraFragment : Fragment() {
                     ProcessingClass.decodeQR(mat, rxData)
                     //delay(15)
                     //Log.d(TAG, "Currently ${rxData.size} QRs")
-                    progressBar.progress = rxData.size
+                    //progressBar.progress = rxData.size
                 }
 
                 // Remove ImageReader listener and clean variables
                 imageReader.setOnImageAvailableListener({ reader ->
-                    reader.acquireLatestImage().close()
+                    reader.acquireLatestImage()?.close()
                 } , imageReaderHandler)
 
                 /* Call the Reed Solomon Forward Error Correction (RS-FEC) function */
