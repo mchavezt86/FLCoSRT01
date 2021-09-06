@@ -120,9 +120,9 @@ class SelectorFragment : Fragment() {
                         CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)!!
                 val outputFormats = characteristics.get(
                         CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!.outputFormats
-                /* Log.d("FPS ranges",
+                Log.d("FPS ranges",
                     characteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES).contentToString()
-                ) */ // Print the available FPS for the camera.
+                ) // Print the available FPS for the camera.
                 // Try to get the output sizes - mact
                 val outputSizes = characteristics.get(
                     CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!.getOutputSizes(ImageFormat.YUV_420_888)
@@ -143,9 +143,9 @@ class SelectorFragment : Fragment() {
                         FormatItem(
                             "$orientation JPEG ($id) $size", id, ImageFormat.YUV_420_888, size, zoom, aeRange.lower)
                     )
-                    /* Log.d("Min Frame duration","$size: " +
+                    Log.d("Min Frame duration","$size: " +
                             "${characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!
-                                .getOutputMinFrameDuration(ImageFormat.YUV_420_888,size)}") */
+                                .getOutputMinFrameDuration(ImageFormat.YUV_420_888,size)}")
 
                     // Return cameras that support RAW capability
                     if (capabilities.contains(
