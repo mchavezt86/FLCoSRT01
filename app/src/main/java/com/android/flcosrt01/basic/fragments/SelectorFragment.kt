@@ -27,6 +27,7 @@ import android.hardware.camera2.params.StreamConfigurationMap
 import android.media.MediaRecorder
 import android.os.Bundle
 import android.util.Log
+import android.util.Range
 import android.util.Size
 import android.view.LayoutInflater
 import android.view.View
@@ -38,6 +39,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.android.camera.utils.GenericListAdapter
 import com.android.flcosrt01.basic.R
+import java.awt.font.NumericShaper
 
 class SelectorFragment : Fragment() {
 
@@ -120,9 +122,16 @@ class SelectorFragment : Fragment() {
                         CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)!!
                 val outputFormats = characteristics.get(
                         CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!.outputFormats
-                Log.d("FPS ranges",
+                /*Log.d("FPS ranges",
                     characteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES).contentToString()
-                ) // Print the available FPS for the camera.
+                ) // Print the available FPS for the camera. */
+                var fpsRange = 0
+                characteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)?.forEach {
+                    if (it.lower == it.upper && it.upper > fpsRange){
+                        fpsRange = it.upper
+                    }
+                }
+                Log.d("FPS", "stable control AE FPS: $fpsRange")
                 // Try to get the output sizes - mact
                 val outputSizes = characteristics.get(
                     CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!.getOutputSizes(ImageFormat.YUV_420_888)
@@ -148,24 +157,24 @@ class SelectorFragment : Fragment() {
                                 .getOutputMinFrameDuration(ImageFormat.YUV_420_888,size)}")
 
                     // Return cameras that support RAW capability
-                    if (capabilities.contains(
+                    /*if (capabilities.contains(
                             CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW) &&
                         outputFormats.contains(ImageFormat.RAW_SENSOR)) {
                         availableCameras.add(
                             FormatItem(
                                 "$orientation RAW ($id) $size", id, ImageFormat.RAW_SENSOR, size, zoom, aeRange.lower)
                         )
-                    }
+                    }*/
 
                     // Return cameras that support JPEG DEPTH capability
-                    if (capabilities.contains(
+                    /*if (capabilities.contains(
                             CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT) &&
                         outputFormats.contains(ImageFormat.DEPTH_JPEG)) {
                         availableCameras.add(
                             FormatItem(
                                 "$orientation DEPTH ($id) $size", id, ImageFormat.DEPTH_JPEG, size, zoom, aeRange.lower)
                         )
-                    }
+                    }*/
                 }
             }
             return availableCameras
