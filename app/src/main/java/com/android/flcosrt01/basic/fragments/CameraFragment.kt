@@ -36,6 +36,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
+import android.util.Range
 import android.util.Size
 import android.view.LayoutInflater
 import android.view.Surface
@@ -367,6 +368,8 @@ class CameraFragment : Fragment() {
             set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
             // AE to lowest value
             set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,args.aeLow)
+            // AE FPS to highest
+            set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,android.util.Range(args.fps,args.fps))
             // Set AE and AF regions
             set(CaptureRequest.CONTROL_AE_REGIONS,arrayOf(MeteringRectangle(args.zoom,
                 MeteringRectangle.METERING_WEIGHT_MAX-1)))

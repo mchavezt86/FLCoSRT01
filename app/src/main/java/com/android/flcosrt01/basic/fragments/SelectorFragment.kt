@@ -69,7 +69,7 @@ class SelectorFragment : Fragment() {
                             .navigate(
                                 SelectorFragmentDirections.actionSelectorToCamera(
                                     item.cameraId, item.format, item.size.width, item.size.height,
-                                    item.zoom, item.aeLow
+                                    item.zoom, item.aeLow, item.fps
                                 )
                             )
                 }
@@ -87,7 +87,8 @@ class SelectorFragment : Fragment() {
             val format: Int,
             val size: Size,
             val zoom: Rect, // Added by Miguel
-            val aeLow: Int) // Added by Miguel
+            val aeLow: Int,
+            val fps : Int) // Added by Miguel
 
         /** Helper function used to convert a lens orientation enum into a human-readable string */
         private fun lensOrientationString(value: Int) = when(value) {
@@ -147,15 +148,25 @@ class SelectorFragment : Fragment() {
                     // All cameras *must* support JPEG output so we don't need to check characteristics
                     // Replaced the JPEG output to YUV_420_288 - mact
                     /* Include zoom for each size to be scaled */
-                    val zoom = scaleZoom(w,h,6.0F,size)
-                    availableCameras.add(
-                        FormatItem(
-                            "$orientation JPEG ($id) $size", id, ImageFormat.YUV_420_888, size, zoom, aeRange.lower)
-                    )
-                    Log.d("Min Frame duration","$size: " +
-                            "${characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!
-                                .getOutputMinFrameDuration(ImageFormat.YUV_420_888,size)}")
+                    val zoom = scaleZoom(w, h, 6.0F, size)
 
+                    /*Log.d("Min Frame duration","$size: " +
+                            "${characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!
+                                .getOutputMinFrameDuration(ImageFormat.YUV_420_888,size)}")*/
+                    // Get the number of seconds that each frame will take to process
+                    val secondsPerFrame =
+                            characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!
+                                    .getOutputMinFrameDuration(ImageFormat.YUV_420_888, size) / 1_000_000_000.0
+                    // Compute the frames per second to let user select a configuration
+                    val fpsRT = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else fpsRange
+
+                    if (fpsRT == fpsRange) {
+                        availableCameras.add(
+                                FormatItem(
+                                        "$orientation JPEG ($id) $size $fpsRT FPS", id,
+                                        ImageFormat.YUV_420_888, size, zoom, aeRange.lower, fpsRT)
+                        )
+                    }
                     // Return cameras that support RAW capability
                     /*if (capabilities.contains(
                             CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW) &&

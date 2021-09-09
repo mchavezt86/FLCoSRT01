@@ -82,6 +82,9 @@
         <argument
             android:name="ae_low"
             app:argType="integer" />
+        <argument
+            android:name="fps"
+            app:argType="integer" />
 
     </fragment>
 
