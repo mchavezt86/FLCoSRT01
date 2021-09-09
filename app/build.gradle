@@ -97,13 +97,13 @@ dependencies {
     // OpenCV from bytedeco
     // https://mvnrepository.com/artifact/org.bytedeco/opencv
     implementation group: 'org.bytedeco', name: 'opencv', version: '4.5.1-1.5.5'
-    implementation group: 'org.bytedeco', name: 'opencv', version: '4.5.1-1.5.5', classifier: 'android-arm64'
-    implementation group: 'org.bytedeco', name: 'opencv', version: '4.5.1-1.5.5', classifier: 'android-x86_64'
+    //implementation group: 'org.bytedeco', name: 'opencv', version: '4.5.1-1.5.5', classifier: 'android-arm64'
+    //implementation group: 'org.bytedeco', name: 'opencv', version: '4.5.1-1.5.5', classifier: 'android-x86_64'
     // OpenBLAS (required) from bytedeco
     // https://mvnrepository.com/artifact/org.bytedeco/openblas
     implementation group: 'org.bytedeco', name: 'openblas', version: '0.3.13-1.5.5'
-    implementation group: 'org.bytedeco', name: 'openblas', version: '0.3.13-1.5.5', classifier: 'android-arm64'
-    implementation group: 'org.bytedeco', name: 'openblas', version: '0.3.13-1.5.5', classifier: 'android-x86_64'
+    //implementation group: 'org.bytedeco', name: 'openblas', version: '0.3.13-1.5.5', classifier: 'android-arm64'
+    //implementation group: 'org.bytedeco', name: 'openblas', version: '0.3.13-1.5.5', classifier: 'android-x86_64'
 
     // https://mvnrepository.com/artifact/org.bytedeco/javacv
     implementation group: 'org.bytedeco', name: 'javacv', version: '1.5.5'
