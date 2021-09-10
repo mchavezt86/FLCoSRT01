@@ -268,21 +268,23 @@ class CameraFragment : Fragment() {
                 CameraDevice.TEMPLATE_PREVIEW).apply {
                     addTarget(viewFinder.holder.surface)
                     addTarget(imageReader.surface)
-                    //Set Zoom
-                    set(CaptureRequest.SCALER_CROP_REGION,args.zoom)
-                    // Set Continuous Picture mode
-                    set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
-                    // AE to lowest value
-                    set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,args.aeLow)
-                    // Set AE and AF regions
-                    set(CaptureRequest.CONTROL_AE_REGIONS,arrayOf(MeteringRectangle(args.zoom,
-                        MeteringRectangle.METERING_WEIGHT_MAX-1)))
-                    set(CaptureRequest.CONTROL_AF_REGIONS, arrayOf(MeteringRectangle(args.zoom,
-                        MeteringRectangle.METERING_WEIGHT_MAX-1)))
+                //Set Zoom
+                set(CaptureRequest.SCALER_CROP_REGION,args.zoom)
+                // Set Continuous Picture mode
+                //set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
                 /* Control Mode to auto + AF to Continuous + AE to Auto */
                 set(CaptureRequest.CONTROL_MODE,CaptureRequest.CONTROL_MODE_AUTO)
                 set(CaptureRequest.CONTROL_AF_MODE,CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
                 set(CaptureRequest.CONTROL_AE_MODE,CaptureRequest.CONTROL_AE_MODE_ON)
+                // AE to lowest value
+                set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,args.aeLow)
+                // Set AE and AF regions
+                set(CaptureRequest.CONTROL_AE_REGIONS,arrayOf(MeteringRectangle(args.zoom,
+                        MeteringRectangle.METERING_WEIGHT_MAX-1)))
+                set(CaptureRequest.CONTROL_AF_REGIONS, arrayOf(MeteringRectangle(args.zoom,
+                        MeteringRectangle.METERING_WEIGHT_MAX-1)))
+                // AE FPS to highest
+                set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,android.util.Range(args.fps,args.fps))
                 }
 
         // This will keep sending the capture request as frequently as possible until the
@@ -365,20 +367,20 @@ class CameraFragment : Fragment() {
             //Set Zoom
             set(CaptureRequest.SCALER_CROP_REGION,args.zoom)
             // Set Continuous Picture mode
-            set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
-            // AE to lowest value
-            set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,args.aeLow)
-            // AE FPS to highest
-            set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,android.util.Range(args.fps,args.fps))
-            // Set AE and AF regions
-            set(CaptureRequest.CONTROL_AE_REGIONS,arrayOf(MeteringRectangle(args.zoom,
-                MeteringRectangle.METERING_WEIGHT_MAX-1)))
-            set(CaptureRequest.CONTROL_AF_REGIONS, arrayOf(MeteringRectangle(regionAEAF,
-                MeteringRectangle.METERING_WEIGHT_MAX-1)))
+            //set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
             /* Control Mode to auto + AF to Continuous + AE to Auto */
             set(CaptureRequest.CONTROL_MODE,CaptureRequest.CONTROL_MODE_AUTO)
             set(CaptureRequest.CONTROL_AF_MODE,CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
             set(CaptureRequest.CONTROL_AE_MODE,CaptureRequest.CONTROL_AE_MODE_ON)
+            // AE to lowest value
+            set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,args.aeLow)
+            // Set AE and AF regions
+            set(CaptureRequest.CONTROL_AE_REGIONS,arrayOf(MeteringRectangle(args.zoom,
+                    MeteringRectangle.METERING_WEIGHT_MAX-1)))
+            set(CaptureRequest.CONTROL_AF_REGIONS, arrayOf(MeteringRectangle(args.zoom,
+                    MeteringRectangle.METERING_WEIGHT_MAX-1)))
+            // AE FPS to highest
+            set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,android.util.Range(args.fps,args.fps))
         }
 
         // Stop and restart the camera session with new capture requests
@@ -489,7 +491,7 @@ class CameraFragment : Fragment() {
 
                 // Add an Alert Dialog to show results + execution time
                 val resultDialog = ResultDialogFragment()
-                resultDialog.changeText(result, totalTime)
+                resultDialog.changeText(result, "$readCounter frames, $totalTime ms")
                 //resultDialog.show(requireParentFragment().parentFragmentManager,"result")
                 resultDialog.show(activity?.supportFragmentManager!!,"result")
 
@@ -598,17 +600,17 @@ class CameraFragment : Fragment() {
     * the Intent call to Google Maps */
     class ResultDialogFragment : DialogFragment() {
         private var result = "*"
-        private var execTime = 0L
+        private var execTime = "*"
         override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
             return activity?.let{
                 // Use the Builder class for convenient dialog construction
                 val builder = AlertDialog.Builder(it)
                 builder.setMessage(result)
-                builder.setTitle(execTime.toString())
+                builder.setTitle(execTime)
                 builder.create()
             } ?: throw IllegalStateException("Activity cannot be null")
         }
-        fun changeText(text : String, time : Long) {
+        fun changeText(text : String, time : String) {
             /*val builder = AlertDialog.Builder(activity)
             builder.setMessage(text)
             builder.setTitle(time.toString())

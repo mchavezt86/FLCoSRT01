@@ -149,6 +149,7 @@ class SelectorFragment : Fragment() {
                     // Replaced the JPEG output to YUV_420_288 - mact
                     /* Include zoom for each size to be scaled */
                     val zoom = scaleZoom(w, h, 6.0F, size)
+                    //val zoom = calcZoom(w, h, 6.0F)
 
                     /*Log.d("Min Frame duration","$size: " +
                             "${characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!
@@ -160,7 +161,7 @@ class SelectorFragment : Fragment() {
                     // Compute the frames per second to let user select a configuration
                     val fpsRT = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else fpsRange
 
-                    if (fpsRT == fpsRange) {
+                    if (fpsRT >= fpsRange) {
                         availableCameras.add(
                                 FormatItem(
                                         "$orientation JPEG ($id) $size $fpsRT FPS", id,
