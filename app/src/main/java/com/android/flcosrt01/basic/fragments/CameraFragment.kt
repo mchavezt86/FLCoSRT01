@@ -45,6 +45,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toDrawable
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
@@ -87,7 +88,7 @@ class CameraFragment : Fragment() {
     private var yBufferLength = 0
 
     /** ROI */
-    private var roi : Rect? = null
+    //private var roi : Rect? = null
 
     /** Queue for each Mat after applying the ROI mask.*/
     //private val roiMatQueue = ConcurrentLinkedDeque<Mat>()
@@ -147,9 +148,6 @@ class CameraFragment : Fragment() {
     private lateinit var overlay: View
 
     /** ROI rectangle on top of the camera preview */
-    //private lateinit var roiRect: View
-
-    /** ROI rectangle on top of the camera preview */
     private lateinit var roiRectView : View
 
     /** The [CameraDevice] that will be opened in this fragment */
@@ -167,6 +165,10 @@ class CameraFragment : Fragment() {
     /** Queue for storing QR data */
     private val rxData = ConcurrentLinkedDeque<String>()
 
+    /** ROI arrays*/
+    private val roiViewArray = ArrayList<View>(NUMBER_OF_ROIs)
+    private val roiArray = ArrayList<Rect>(NUMBER_OF_ROIs)
+
     override fun onCreateView(
             inflater: LayoutInflater,
             container: ViewGroup?,
@@ -178,8 +180,43 @@ class CameraFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         overlay = view.findViewById(R.id.overlay)
         viewFinder = view.findViewById(R.id.view_finder)
-        //roiRect = view.findViewById(R.id.roi_rect)
-        roiRectView = view.findViewById(R.id.roirect)
+        //roiRectView = view.findViewById(R.id.roirect)
+        val frameLayout = view.findViewById<FrameLayout>(R.id.frame_layout)
+
+        /*roiArray.forEach {
+            frameLayout.addView(it)
+            it.apply {
+                id = View.generateViewId()
+                layoutParams.width = 0
+                layoutParams.height = 0
+                background = ContextCompat.getDrawable(context,R.drawable.emptyrect)
+                visibility = View.INVISIBLE
+            }
+        }*/
+
+        for (i in 0 until NUMBER_OF_ROIs){
+            val roiView = View(context)
+            frameLayout.addView(roiView)
+            roiView.apply {
+                id = View.generateViewId()
+                layoutParams.width = 0
+                layoutParams.height = 0
+                background = ContextCompat.getDrawable(context,R.drawable.emptyrect)
+                visibility = View.INVISIBLE
+            }
+            roiViewArray.add(roiView)
+        }
+
+        /*roiRectView = View(context)
+        frameLayout.addView(roiRectView)
+        roiRectView.apply {
+            id = View.generateViewId()
+            layoutParams.width = 0
+            layoutParams.height = 0
+            background = ContextCompat.getDrawable(context,R.drawable.emptyrect)
+            visibility = View.INVISIBLE
+        }*/
+
         capture_button.setOnApplyWindowInsetsListener { v, insets ->
             v.translationX = (-insets.systemWindowInsetRight).toFloat()
             v.translationY = (-insets.systemWindowInsetBottom).toFloat()
@@ -316,8 +353,8 @@ class CameraFragment : Fragment() {
                     it.close()
                     val matImg = Mat(size.height, size.width, CvType.CV_8UC1)
                     matImg.data().put(byteArray, 0, byteArray.size)
-                    if (roi == null) {
-                        roi = ProcessingClass.detectROI(matImg)
+                    if (roiArray.size < NUMBER_OF_ROIs) {
+                        ProcessingClass.detectROI(matImg,roiArray)
                     }
                 }
                 /*val byteArray = ByteArray(yBufferLength)
@@ -330,7 +367,7 @@ class CameraFragment : Fragment() {
                 }*/
             }, imageReaderHandler)
         }
-        while(roi == null){
+        while(roiArray.size < NUMBER_OF_ROIs){
             delay(10)
         }
 
@@ -340,22 +377,37 @@ class CameraFragment : Fragment() {
             reader.acquireLatestImage()?.close()
         },imageReaderHandler)
 
-        Log.d(TAG,"ImageReader -> width: ${size.width}, height: ${size.height}, Y-Buffer size: $yBufferLength ")
+        for (i in 0 until NUMBER_OF_ROIs){
+            Log.d(TAG,"ImageReader -> width: ${size.width}, height: ${size.height}, Y-Buffer size: $yBufferLength ")
+            Log.d(TAG,"ROI -> width: ${roiArray[i].width()}, height: ${roiArray[i].height()}")
+
+            /*Set the ROI View parameters to be displayed in the camera surface*/
+            roiViewArray[i].y = (roiArray[i].x() * viewFinder.height / size.width).toFloat()
+            roiViewArray[i].x = (viewFinder.width- (roiArray[i].y() + roiArray[i].height()) * viewFinder.width / size.height).toFloat()
+            roiViewArray[i].layoutParams = FrameLayout.LayoutParams(
+                roiArray[i].height() * viewFinder.width / size.height,
+                roiArray[i].width() * viewFinder.height / size.width
+            )
+
+            roiViewArray[i].visibility = View.VISIBLE
+        }
+
+        /*Log.d(TAG,"ImageReader -> width: ${size.width}, height: ${size.height}, Y-Buffer size: $yBufferLength ")
         Log.d(TAG,"ROI -> width: ${roi!!.width()}, height: ${roi!!.height()}")
 
         /*Set the ROI View parameters to be displayed in the camera surface*/
-        roiRectView.y = (roi!!.x() * viewFinder.height / size.width).toFloat()
-        roiRectView.x = (viewFinder.width- (roi!!.y() + roi!!.height()) * viewFinder.width / size.height).toFloat()
-        roiRectView.layoutParams = FrameLayout.LayoutParams(
+        roiViewArray[0].y = (roi!!.x() * viewFinder.height / size.width).toFloat()
+        roiViewArray[0].x = (viewFinder.width- (roi!!.y() + roi!!.height()) * viewFinder.width / size.height).toFloat()
+        roiViewArray[0].layoutParams = FrameLayout.LayoutParams(
             roi!!.height() * viewFinder.width / size.height,
             roi!!.width() * viewFinder.height / size.width
-        )
+        )*/
         /* Show the ROI and the capture button */
-        roiRectView.visibility = View.VISIBLE
+        //roiViewArray[0].visibility = View.VISIBLE
         capture_button.visibility = View.VISIBLE
 
         /* Calculate AE/AF rectangle */
-        val regionAEAF = ProcessingClass.scaleRect(args.zoom, size, roi!!)
+        //val regionAEAF = ProcessingClass.scaleRect(args.zoom, size, roi!!)
 
         /** NOTE: Here should go the code to implement a new capture request based on the AE/AF
          * regions. This needs to be implemented accordingly to get the lowest AE value. Interesting
@@ -452,7 +504,10 @@ class CameraFragment : Fragment() {
                         roiMatQueue.add(Mat(matImg, roi)) //Add Mat using the ROI or LinkedBlockingQueue
                         //roiMatQueue.add(matImg)
                     }*/
-                    roiMatQueue.add(Mat(matImg,roi))
+                    //roiMatQueue.add(Mat(matImg,roi))
+                    for (i in 0 until NUMBER_OF_ROIs){
+                        roiMatQueue.add(Mat(matImg,roiArray[i]))
+                    }
                     Log.d(TAG, "Taking image $readCounter")
                     readCounter += 1
                 }
@@ -631,6 +686,9 @@ class CameraFragment : Fragment() {
 
         /** Maximum time allowed to wait for the result of an image capture */
         private const val IMAGE_CAPTURE_TIMEOUT_MILLIS: Long = 5000
+
+        /** Number of ROIs */
+        private const val NUMBER_OF_ROIs = 2
 
         /** Helper data class used to hold capture metadata with their associated image */
         data class CombinedCaptureResult(

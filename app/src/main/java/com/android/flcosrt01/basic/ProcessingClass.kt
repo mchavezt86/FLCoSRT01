@@ -18,6 +18,7 @@ import com.backblaze.erasure.ReedSolomon
 import org.bytedeco.opencv.opencv_core.MatVector
 import org.bytedeco.opencv.opencv_core.Rect
 import java.lang.StringBuilder
+import kotlin.collections.ArrayList
 
 class ProcessingClass {
     companion object {
@@ -171,6 +172,78 @@ class ProcessingClass {
             }
 
             return resultString.toString()
+        }
+
+        /**Function to detect the active area of the FLC, as it reflects light it is brighter than the
+         * 3D printed holder. Use of OpenCV contour detection and physical dimensions of the FLC. Main
+         * logic: detect a rectangle that is not too big or too small and have an aspect ration smaller
+         * than 16/9 or 4/3
+         * Input: Bitmap, Array of Rectangle
+         * Output: - */
+        fun detectROI(mat : Mat, roiArray : ArrayList<Rect>) {
+            //cvtColor(mat,mat, COLOR_BGR2GRAY) //Convert to GrayScale
+            val binSize = mat.size().height()/2-1 //bin size for the binarisation
+            //Constants for the area size
+            val minArea = (mat.size().area()/50) //> 2% of total screen
+            val maxArea = (mat.size().area()/5) //< 8% of total screen
+            //Other variables
+            val bin = Mat() //Mat for binarisation result
+            val contours = MatVector() /*Contour detection returns a Mat Vector*/
+            roiArray.clear()
+
+            /*Image processing of the frame consists of:
+            *- Adaptive Binarisation: large bin size allows to detect bigger features i.e. the FLC area
+            *  so the bin size is half of the camera width.
+            *  *********SUBJECT TO EVALUATION!!!!!!*********
+            *- Contour extraction: we use only the contour variable which holds the detected contours in
+            *  the form of a Mat vector*/
+            adaptiveThreshold(mat,bin,255.0,ADAPTIVE_THRESH_GAUSSIAN_C,THRESH_BINARY,binSize,0.0)
+            findContours(bin,contours,Mat(),RETR_LIST, CHAIN_APPROX_SIMPLE) //Mat() is for hierarchy [RETR_EXTERNAL]
+
+            //Variable initialisation for the detected contour initialisation.
+            var cnt : Mat
+            var points : Mat
+            var rect : Rect
+            var aspect: Double
+            //Final variable to return
+            //var finalRect : Rect? = null
+
+            /*Main for loop allows iteration. Contours.get(index) returns a Mat which holds the contour
+            * points.*/
+            loop@ for (i in 0 until contours.size()){
+                cnt = contours.get(i)
+                points = Mat() //Polygon points
+                /*This function approximates each contour to a polygon. Parameters: source, destination,
+                        * epsilon, closed polygon?. Epsilon: approximation accuracy. */
+                approxPolyDP(cnt,points, 0.01*arcLength(cnt,true),true)
+
+                /*The polygon approximation returns a Mat (name 'points'). The structure of this Mat is
+                        * width = 1, height = number of vertices, channels = 2 (possibly coordinates).
+                        * The steps from here are:
+                        *- Select polygons with 4 corners
+                        *- Select only polygons which are large enough in size.
+                        *- Calculate a bounding rectangle for the polygon, for the FLC should be the actual FLC
+                        *  area, thus the aspect ratio of this rectangle should be known.
+                        *- Lastly, filter the rectangle based on its area not too big in size and have an aspect
+                        *  ration between 0.5 and 2. We cannot tell if the rectangle is rotated but the aspect
+                        *  ratio of the FLC is 16/9 = 1.7 or 9/16 = 0.56. However, if the FLC and the phone are
+                        *  not parallel, the FLC might be a square. */
+                if (points.size().height()==4){
+                    if(contourArea(cnt) > minArea){ //Only large polygons.
+                        rect = boundingRect(cnt)
+                        aspect = (rect.width().toDouble()/rect.height().toDouble())
+                        Log.i("Contour","Area=${contourArea(cnt)}")
+                        Log.i("Contour","Aspect=${aspect}")
+                        if (rect.area() < maxArea && aspect > 0.5 && aspect < 2.0){
+                            //Save values of ROI for the decode function.
+                            roiArray.add(rect)
+                            Log.i("FLC","w=${rect.width()},h=${rect.height()}," +
+                                    "x=${rect.x()},y=${rect.y()}")
+                            if (roiArray.size == 2) break@loop // break 'contours' for loop.
+                        }
+                    }
+                }
+            }
         }
 
         /**Function to detect the active area of the FLC, as it reflects light it is brighter than the
