@@ -16,4 +16,10 @@
 <resources>
     <string name="app_name">FLCoS Real-time</string>
     <string name="capture">Capture</string>
+    <string name="qrv1">QR v1</string>
+    <string name="qrv2">QR v2</string>
+    <string name="qrv3">QR v3</string>
+    <string name="tx1">1 Tx</string>
+    <string name="tx2">2 Tx</string>
+    <string name="rs_total">/255</string>
 </resources>

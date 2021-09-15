@@ -18,6 +18,7 @@ package com.android.flcosrt01.basic.fragments
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Camera
 import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.hardware.camera2.CameraCharacteristics
@@ -26,17 +27,22 @@ import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.params.StreamConfigurationMap
 import android.media.MediaRecorder
 import android.os.Bundle
+import android.text.TextWatcher
 import android.util.Log
 import android.util.Range
 import android.util.Size
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.RadioGroup
 import android.widget.TextView
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.navigation.Navigation
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.android.flcosrt01.basic.CameraActivity
 import com.example.android.camera.utils.GenericListAdapter
 import com.android.flcosrt01.basic.R
 import java.awt.font.NumericShaper
@@ -47,13 +53,41 @@ class SelectorFragment : Fragment() {
             inflater: LayoutInflater,
             container: ViewGroup?,
             savedInstanceState: Bundle?
-    ): View? = RecyclerView(requireContext())
+    ): View? = inflater.inflate(R.layout.selector_fragment, container, false)
 
     @SuppressLint("MissingPermission")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        view as RecyclerView
-        view.apply {
+
+        /* Get the radio values of the QR version */
+        val qrVersionRG = view.findViewById<RadioGroup>(R.id.code_version)
+        qrVersionRG.setOnCheckedChangeListener { _, checkedId ->
+             when (checkedId) {
+                 R.id.qr_v1 -> CameraActivity.qrBytes = 17
+                 R.id.qr_v2 -> CameraActivity.qrBytes = 32
+                 R.id.qr_v3 -> CameraActivity.qrBytes = 53
+                 else -> Log.d("QRv","QR version error")
+             }
+        }
+
+        /* Get the number of transmitters */
+        val numberOfTx = view.findViewById<RadioGroup>(R.id.n_tx)
+        numberOfTx.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.tx_1 -> CameraActivity.numberOfTx = 1
+                R.id.tx_2 -> CameraActivity.numberOfTx = 2
+                else -> Log.d("NrOfTx","Error in number of transmitters")
+            }
+        }
+
+        val rsData = view.findViewById<EditText>(R.id.rs_data)
+        rsData.addTextChangedListener {
+            CameraActivity.rsDataSize =  rsData.text.toString().toInt()
+        }
+
+        //view as RecyclerView
+        val viewCamList = view.findViewById<RecyclerView>(R.id.camera_list)
+        viewCamList.apply {
             layoutManager = LinearLayoutManager(requireContext())
 
             val cameraManager =

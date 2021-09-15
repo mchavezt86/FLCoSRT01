@@ -25,12 +25,15 @@ class ProcessingClass {
         // String of a decoded QR
         private lateinit var qrString : String
 
-        //Sizes for Reed Solomon Encoder
-        const val RS_DATA_SIZE = 191
-        private const val RS_PARITY_SIZE = 64
+        // Number of ROI (Constant for this Fragment)
+        private val NUMBER_OF_ROIs = CameraActivity.numberOfTx
+
+        //Sizes for Reed Solomon Encoder (Constant for this Fragment)
+        private val RS_DATA_SIZE = CameraActivity.rsDataSize //191
         private const val RS_TOTAL_SIZE = 255
+        private val RS_PARITY_SIZE = RS_TOTAL_SIZE - RS_DATA_SIZE //64
         //Number of bytes in a QR code, version 1: 17 bytes
-        private const val QR_BYTES = 17
+        private val QR_BYTES = CameraActivity.qrBytes //17
 
         /** Function to start the concurrent image processing of Mat objects and concurrent
          * attempts to decode QRs based on multi-threading.
@@ -189,7 +192,7 @@ class ProcessingClass {
             //Other variables
             val bin = Mat() //Mat for binarisation result
             val contours = MatVector() /*Contour detection returns a Mat Vector*/
-            roiArray.clear()
+            roiArray.clear() // This function needs to find 'X' ROIs at the same time.
 
             /*Image processing of the frame consists of:
             *- Adaptive Binarisation: large bin size allows to detect bigger features i.e. the FLC area
@@ -239,7 +242,7 @@ class ProcessingClass {
                             roiArray.add(rect)
                             Log.i("FLC","w=${rect.width()},h=${rect.height()}," +
                                     "x=${rect.x()},y=${rect.y()}")
-                            if (roiArray.size == 2) break@loop // break 'contours' for loop.
+                            if (roiArray.size == NUMBER_OF_ROIs) break@loop // break 'contours' for loop.
                         }
                     }
                 }

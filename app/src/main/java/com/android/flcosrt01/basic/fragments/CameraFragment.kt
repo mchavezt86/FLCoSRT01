@@ -222,7 +222,7 @@ class CameraFragment : Fragment() {
             v.translationY = (-insets.systemWindowInsetBottom).toFloat()
             insets.consumeSystemWindowInsets()
         }
-        progressBar.max = ProcessingClass.RS_DATA_SIZE
+        progressBar.max = CameraActivity.rsDataSize
 
         viewFinder.holder.addCallback(object : SurfaceHolder.Callback {
             override fun surfaceDestroyed(holder: SurfaceHolder) = Unit
@@ -688,7 +688,7 @@ class CameraFragment : Fragment() {
         private const val IMAGE_CAPTURE_TIMEOUT_MILLIS: Long = 5000
 
         /** Number of ROIs */
-        private const val NUMBER_OF_ROIs = 2
+        private val NUMBER_OF_ROIs = CameraActivity.numberOfTx
 
         /** Helper data class used to hold capture metadata with their associated image */
         data class CombinedCaptureResult(
