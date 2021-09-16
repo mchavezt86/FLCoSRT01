@@ -1,5 +1,6 @@
 package com.android.flcosrt01.basic
 
+import android.graphics.Camera
 import android.util.Log
 import android.util.Size
 import org.bytedeco.opencv.opencv_core.Mat
@@ -21,19 +22,20 @@ import java.lang.StringBuilder
 import kotlin.collections.ArrayList
 
 class ProcessingClass {
+
     companion object {
         // String of a decoded QR
         private lateinit var qrString : String
 
         // Number of ROI (Constant for this Fragment)
-        private val NUMBER_OF_ROIs = CameraActivity.numberOfTx
+        //private val NUMBER_OF_ROIs = CameraActivity.numberOfTx
 
         //Sizes for Reed Solomon Encoder (Constant for this Fragment)
-        private val RS_DATA_SIZE = CameraActivity.rsDataSize //191
+        //private val RS_DATA_SIZE = CameraActivity.rsDataSize //191
         private const val RS_TOTAL_SIZE = 255
-        private val RS_PARITY_SIZE = RS_TOTAL_SIZE - RS_DATA_SIZE //64
+        //private val RS_PARITY_SIZE = RS_TOTAL_SIZE - RS_DATA_SIZE //64
         //Number of bytes in a QR code, version 1: 17 bytes
-        private val QR_BYTES = CameraActivity.qrBytes //17
+        //private val QR_BYTES = CameraActivity.qrBytes //17
 
         /** Function to start the concurrent image processing of Mat objects and concurrent
          * attempts to decode QRs based on multi-threading.
@@ -136,15 +138,18 @@ class ProcessingClass {
          * Output: String */
         fun reedSolomonFEC(rxData: ConcurrentLinkedDeque<String>) : String {
             /* Initialise variables */
-            val rs = ReedSolomon.create(RS_DATA_SIZE, RS_PARITY_SIZE)
-            val byteMsg : Array<ByteArray> by lazy { Array(RS_TOTAL_SIZE) {ByteArray(QR_BYTES-1) {0} } }
+            val rsDataSize = CameraActivity.rsDataSize
+            val rsParitySize = RS_TOTAL_SIZE - rsDataSize
+            val qrByte = CameraActivity.qrBytes
+            val rs = ReedSolomon.create(rsDataSize,rsParitySize)//RS_DATA_SIZE, RS_PARITY_SIZE)
+            val byteMsg : Array<ByteArray> by lazy { Array(RS_TOTAL_SIZE) {ByteArray(qrByte-1) {0} } }
             val erasure : BooleanArray by lazy { BooleanArray(RS_TOTAL_SIZE){false} }
             val resultString = StringBuilder()
 
             /* First the data inside de rxData is ordered and stored in byteMsg while filling the
             * erasure array */
             // Array of bytes to store the data within the QR.
-            val dataBytes = ByteArray(QR_BYTES)
+            val dataBytes = ByteArray(qrByte)
             rxData.forEach {
                 /*Convert the QR data, stored as a String and copy it into a Byte Array. The charset is
                 * not mandatory but advisable */
@@ -165,8 +170,8 @@ class ProcessingClass {
         * Try to perform the Reed Solomon decoding and modify the text using the StringBuilder. If
         * the decoding fails the StringBuilder shows an error message.*/
             try {
-                rs.decodeMissing(byteMsg, erasure, 0, QR_BYTES - 1)
-                for (i in 0 until RS_DATA_SIZE){
+                rs.decodeMissing(byteMsg, erasure, 0, qrByte - 1)
+                for (i in 0 until rsDataSize){
                     resultString.append(byteMsg[i].toString(Charsets.ISO_8859_1))
                 }
             } catch (e: Exception){
@@ -242,7 +247,7 @@ class ProcessingClass {
                             roiArray.add(rect)
                             Log.i("FLC","w=${rect.width()},h=${rect.height()}," +
                                     "x=${rect.x()},y=${rect.y()}")
-                            if (roiArray.size == NUMBER_OF_ROIs) break@loop // break 'contours' for loop.
+                            if (roiArray.size == CameraActivity.numberOfTx) break@loop // break 'contours' for loop.
                         }
                     }
                 }

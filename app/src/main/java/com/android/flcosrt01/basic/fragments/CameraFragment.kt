@@ -165,9 +165,12 @@ class CameraFragment : Fragment() {
     /** Queue for storing QR data */
     private val rxData = ConcurrentLinkedDeque<String>()
 
+    /** Number of ROIs */
+    private val numberOfROIs = CameraActivity.numberOfTx
+
     /** ROI arrays*/
-    private val roiViewArray = ArrayList<View>(NUMBER_OF_ROIs)
-    private val roiArray = ArrayList<Rect>(NUMBER_OF_ROIs)
+    private val roiViewArray = ArrayList<View>(numberOfROIs)
+    private val roiArray = ArrayList<Rect>(numberOfROIs)
 
     override fun onCreateView(
             inflater: LayoutInflater,
@@ -194,7 +197,7 @@ class CameraFragment : Fragment() {
             }
         }*/
 
-        for (i in 0 until NUMBER_OF_ROIs){
+        for (i in 0 until numberOfROIs){
             val roiView = View(context)
             frameLayout.addView(roiView)
             roiView.apply {
@@ -353,7 +356,7 @@ class CameraFragment : Fragment() {
                     it.close()
                     val matImg = Mat(size.height, size.width, CvType.CV_8UC1)
                     matImg.data().put(byteArray, 0, byteArray.size)
-                    if (roiArray.size < NUMBER_OF_ROIs) {
+                    if (roiArray.size < numberOfROIs) {
                         ProcessingClass.detectROI(matImg,roiArray)
                     }
                 }
@@ -367,7 +370,7 @@ class CameraFragment : Fragment() {
                 }*/
             }, imageReaderHandler)
         }
-        while(roiArray.size < NUMBER_OF_ROIs){
+        while(roiArray.size < numberOfROIs){
             delay(10)
         }
 
@@ -377,7 +380,7 @@ class CameraFragment : Fragment() {
             reader.acquireLatestImage()?.close()
         },imageReaderHandler)
 
-        for (i in 0 until NUMBER_OF_ROIs){
+        for (i in 0 until numberOfROIs){
             Log.d(TAG,"ImageReader -> width: ${size.width}, height: ${size.height}, Y-Buffer size: $yBufferLength ")
             Log.d(TAG,"ROI -> width: ${roiArray[i].width()}, height: ${roiArray[i].height()}")
 
@@ -505,7 +508,7 @@ class CameraFragment : Fragment() {
                         //roiMatQueue.add(matImg)
                     }*/
                     //roiMatQueue.add(Mat(matImg,roi))
-                    for (i in 0 until NUMBER_OF_ROIs){
+                    for (i in 0 until numberOfROIs){
                         roiMatQueue.add(Mat(matImg,roiArray[i]))
                     }
                     Log.d(TAG, "Taking image $readCounter")
@@ -688,7 +691,7 @@ class CameraFragment : Fragment() {
         private const val IMAGE_CAPTURE_TIMEOUT_MILLIS: Long = 5000
 
         /** Number of ROIs */
-        private val NUMBER_OF_ROIs = CameraActivity.numberOfTx
+        //private val NUMBER_OF_ROIs = CameraActivity.numberOfTx
 
         /** Helper data class used to hold capture metadata with their associated image */
         data class CombinedCaptureResult(
