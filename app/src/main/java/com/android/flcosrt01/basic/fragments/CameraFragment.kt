@@ -486,11 +486,19 @@ class CameraFragment : Fragment() {
                 * This reads, gets the plane and stores the byteArray variable in the
                 * ArrayBlockingQueue bufferQueue*/
                 imageReader.setOnImageAvailableListener({ reader ->
-                    val image = reader.acquireNextImage()
+                    /*reader.acquireNextImage()?.let { image ->
+                        val byteArray = ByteArray(yBufferLength)
+                        image.planes[0].buffer.get(byteArray,0,yBufferLength)
+                        bufferQueue.add(byteArray)
+                        image.close()
+                        Log.d(TAG, "Image counter: $imgCounter")
+                        imgCounter += 1
+                    }*/
+                    val image = reader.acquireNextImage() /** Non-null assessment? Reduces capture rate...*/
                     val byteArray = ByteArray(yBufferLength)
-                    image.planes[0].buffer.get(byteArray,0,yBufferLength)
+                    image?.planes?.get(0)?.buffer?.get(byteArray,0,yBufferLength)
                     bufferQueue.add(byteArray)
-                    image.close()
+                    image?.close()
                     Log.d(TAG, "Image counter: $imgCounter")
                     imgCounter += 1
                 }, imageReaderHandler)
@@ -537,9 +545,11 @@ class CameraFragment : Fragment() {
                 }
 
                 // Remove ImageReader listener and clean variables
-                imageReader.setOnImageAvailableListener({ reader ->
-                    reader.acquireLatestImage()?.close()
-                } , imageReaderHandler)
+                lifecycleScope.launch(Dispatchers.IO) {
+                    imageReader.setOnImageAvailableListener({ reader ->
+                        reader.acquireLatestImage()?.close()
+                    } , imageReaderHandler)
+                }
                 // Stop job
                 savingMatJob.cancel()
 

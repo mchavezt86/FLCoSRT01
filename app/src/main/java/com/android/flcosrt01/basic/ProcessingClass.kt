@@ -137,7 +137,7 @@ class ProcessingClass {
          * Input: ConcurrentLinkedDeque
          * Output: String */
         fun reedSolomonFEC(rxData: ConcurrentLinkedDeque<String>) : String {
-            /* Initialise variables */
+            /* Initialise variables */ Log.d("RS","Start of Reed-Solomon")
             val rsDataSize = CameraActivity.rsDataSize
             val rsParitySize = RS_TOTAL_SIZE - rsDataSize
             val qrByte = CameraActivity.qrBytes
