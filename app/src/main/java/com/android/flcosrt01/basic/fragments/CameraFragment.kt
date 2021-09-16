@@ -508,9 +508,12 @@ class CameraFragment : Fragment() {
                         //roiMatQueue.add(matImg)
                     }*/
                     //roiMatQueue.add(Mat(matImg,roi))
-                    for (i in 0 until numberOfROIs){
-                        roiMatQueue.add(Mat(matImg,roiArray[i]))
+                    roiArray.forEach{ roi ->
+                        roiMatQueue.add(Mat(matImg,roi))
                     }
+                    /*for (i in 0 until numberOfROIs){
+                        roiMatQueue.add(Mat(matImg,roiArray[i]))
+                    }*/
                     Log.d(TAG, "Taking image $readCounter")
                     readCounter += 1
                 }
@@ -537,14 +540,16 @@ class CameraFragment : Fragment() {
                 imageReader.setOnImageAvailableListener({ reader ->
                     reader.acquireLatestImage()?.close()
                 } , imageReaderHandler)
+                // Stop job
+                savingMatJob.cancel()
 
                 /* Call the Reed Solomon Forward Error Correction (RS-FEC) function */
                 val result = ProcessingClass.reedSolomonFEC(rxData)
-                Log.d(TAG, "Result: $result")
+                //Log.d(TAG, "Result: $result")
 
                 val totalTime = System.currentTimeMillis() - startTime // Time duration
                 //Log.d(TAG,"FPS: ${100000.0/totalTime}")
-                Log.d(TAG,"Total time : $totalTime")
+                //Log.d(TAG,"Total time : $totalTime")
                 overlay.post(animationTask)
 
                 // Add an Alert Dialog to show results + execution time
@@ -556,6 +561,7 @@ class CameraFragment : Fragment() {
                 // Clear some variables
                 imgCounter = 0
                 bufferQueue.clear()
+                roiMatQueue.clear()
                 rxData.clear()
                 it.post {
                     it.isEnabled = true
