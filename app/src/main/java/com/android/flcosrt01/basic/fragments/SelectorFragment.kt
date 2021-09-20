@@ -243,7 +243,7 @@ class SelectorFragment : Fragment() {
             val centerX = w/2
             val centerY = h/2
             val deltaX = ((0.5F * w) / newZoom ).toInt()
-            val deltaY = ((0.5F * w * size.height / size.width) / newZoom ).toInt()
+            val deltaY = ((0.5F * h) / newZoom ).toInt()
 
             return Rect(centerX - deltaX,centerY - deltaY,centerX + deltaX,centerY + deltaY)
         }
