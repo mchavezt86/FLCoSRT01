@@ -41,9 +41,10 @@ class ProcessingClass {
          * attempts to decode QRs based on multi-threading.
          * Input: OpenCV Mat, ConcurrentLinkedDeque
          * Output: None, modifies the ConcurrentLinkedDeque */
-        fun decodeQR(mat : Mat?, rxData : ConcurrentLinkedDeque<String>){
+        fun decodeQR(mat : Mat?, rxData : ConcurrentLinkedDeque<String>) : Boolean {
             val matEqP = Mat() // Equalised grayscale image
             val matNorm = Mat() // Normalised grayscale image
+            var noQR = false
             mat?.let {
                 // Variables to control multi-thread environment
                 val jobDecode = Job()
@@ -65,14 +66,15 @@ class ProcessingClass {
                 }
 
                 try {
-                    runBlocking {
-                        var noQR = tmp1.await() && tmp2.await() && tmp3.await()
+                    noQR = runBlocking {
+                        /*var noQR =*/ tmp1.await() && tmp2.await() && tmp3.await()
                     }
                 }
                 catch (e: CancellationException) {
                     Log.i("decodeScope", "Exception: $e")
                 }
             }
+            return noQR
         }
 
         /** Function to decode QR based on a OpenCV Mat
@@ -114,9 +116,10 @@ class ProcessingClass {
                         //Log.i("RS","Bytes UTF: ${qrString.toByteArray(Charsets.UTF_8).contentToString()}")
                         //Log.i("RS","Byte number: ${qrString.toByteArray(charset = Charsets.ISO_8859_1)[0].toUByte()}")
                         scopeDecode.cancel("QR detected")
+                        return false
                     }
                 }
-                return false
+                return true //false
             }
             catch (e : NotFoundException){//NotFoundException){
                 //Log.i("QR Reader","Not found")

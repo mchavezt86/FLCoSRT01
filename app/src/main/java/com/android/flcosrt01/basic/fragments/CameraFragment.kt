@@ -538,7 +538,10 @@ class CameraFragment : Fragment() {
                         ProcessingClass.decodeQR(mat, rxData)
                     }*/
                     val mat = withContext(Dispatchers.IO){ roiMatQueue.take() }
-                    ProcessingClass.decodeQR(mat, rxData)
+                    //ProcessingClass.decodeQR(mat, rxData)
+                    if (!ProcessingClass.decodeQR(mat, rxData)) {
+                        progressBar.progress = rxData.size
+                    }
                     //delay(15)
                     //Log.d(TAG, "Currently ${rxData.size} QRs")
                     //progressBar.progress = rxData.size
