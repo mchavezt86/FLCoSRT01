@@ -172,6 +172,9 @@ class CameraFragment : Fragment() {
     private val roiViewArray = ArrayList<View>(numberOfROIs)
     private val roiArray = ArrayList<Rect>(numberOfROIs)
 
+    /** Number or RS Data size*/
+    private val rsDataSize = CameraActivity.rsDataSize
+
     override fun onCreateView(
             inflater: LayoutInflater,
             container: ViewGroup?,
@@ -225,7 +228,7 @@ class CameraFragment : Fragment() {
             v.translationY = (-insets.systemWindowInsetBottom).toFloat()
             insets.consumeSystemWindowInsets()
         }
-        progressBar.max = CameraActivity.rsDataSize
+        progressBar.max = rsDataSize
 
         viewFinder.holder.addCallback(object : SurfaceHolder.Callback {
             override fun surfaceDestroyed(holder: SurfaceHolder) = Unit
@@ -410,7 +413,7 @@ class CameraFragment : Fragment() {
         capture_button.visibility = View.VISIBLE
 
         /* Calculate AE/AF rectangle */
-        //val regionAEAF = ProcessingClass.scaleRect(args.zoom, size, roi!!)
+        /*val regionAEAF = ProcessingClass.scaleRect(args.zoom, size, roi!!)*/
 
         /** NOTE: Here should go the code to implement a new capture request based on the AE/AF
          * regions. This needs to be implemented accordingly to get the lowest AE value. Interesting
@@ -427,6 +430,7 @@ class CameraFragment : Fragment() {
             set(CaptureRequest.CONTROL_MODE,CaptureRequest.CONTROL_MODE_AUTO)
             set(CaptureRequest.CONTROL_AF_MODE,CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
             set(CaptureRequest.CONTROL_AE_MODE,CaptureRequest.CONTROL_AE_MODE_ON)
+            set(CaptureRequest.CONTROL_AE_LOCK,true)
             // AE to lowest value
             set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,args.aeLow)
             // Set AE and AF regions
@@ -435,7 +439,7 @@ class CameraFragment : Fragment() {
             set(CaptureRequest.CONTROL_AF_REGIONS, arrayOf(MeteringRectangle(args.zoom,
                     MeteringRectangle.METERING_WEIGHT_MAX-1)))
             // AE FPS to highest
-            set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,android.util.Range(args.fps,args.fps))
+            set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,Range(args.fps,args.fps))
         }
 
         // Stop and restart the camera session with new capture requests
@@ -531,7 +535,7 @@ class CameraFragment : Fragment() {
                 /* When finished clean some variables, remove the ImageReader listener, print the
                 * calculated FPS and re-enable the capture button */
 
-                while (rxData.size < 192) {
+                while (rxData.size < rsDataSize) {
                     //val mat : Mat?
                     /*synchronized(roiMatQueue){ //Recheck: idea -> block decodeQR, remove delay
                         mat = roiMatQueue.pollFirst()
