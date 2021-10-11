@@ -3,6 +3,8 @@ package com.android.flcosrt01.basic
 import android.graphics.Camera
 import android.util.Log
 import android.util.Size
+import com.android.flcosrt01.basic.CameraActivity.Companion.RS_TOTAL_SIZE
+import com.android.flcosrt01.basic.CameraActivity.Companion.rs
 import org.bytedeco.opencv.opencv_core.Mat
 import java.util.concurrent.ConcurrentLinkedDeque
 import org.bytedeco.opencv.global.opencv_imgproc.*
@@ -25,14 +27,14 @@ class ProcessingClass {
 
     companion object {
         // String of a decoded QR
-        private lateinit var qrString : String
+        //private lateinit var qrString : String
 
         // Number of ROI (Constant for this Fragment)
         //private val NUMBER_OF_ROIs = CameraActivity.numberOfTx
 
         //Sizes for Reed Solomon Encoder (Constant for this Fragment)
         //private val RS_DATA_SIZE = CameraActivity.rsDataSize //191
-        private const val RS_TOTAL_SIZE = 255
+        //private const val RS_TOTAL_SIZE = 255
         //private val RS_PARITY_SIZE = RS_TOTAL_SIZE - RS_DATA_SIZE //64
         //Number of bytes in a QR code, version 1: 17 bytes
         //private val QR_BYTES = CameraActivity.qrBytes //17
@@ -105,11 +107,11 @@ class ProcessingClass {
             try { //Detect QR and print result
                 result = qrReader.decode(binBitmap,hints)
                 //Get the data in String and try to add it to the ConcurrentLinkedQueue: rxData
-                qrString = result.text
+                val qrString = result.text
                 /*Get the data in ByteArray and try to add it to the ConcurrentLinkedQueue: rxBytes.*/
                 //Fully sync check and add data to the rxData.
                 synchronized(rxData){
-                    if (!rxData.contains(qrString)){
+                    if (!rxData.contains(qrString) && scopeDecode.isActive){
                         rxData.add(qrString)
                         //Log.i("RS","String: $qrString")
                         Log.i("RS","Bytes ISO: ${qrString.toByteArray(Charsets.ISO_8859_1).contentToString()}")
@@ -142,9 +144,9 @@ class ProcessingClass {
         fun reedSolomonFEC(rxData: ConcurrentLinkedDeque<String>) : String {
             /* Initialise variables */ Log.d("RS","Start of Reed-Solomon")
             val rsDataSize = CameraActivity.rsDataSize
-            val rsParitySize = RS_TOTAL_SIZE - rsDataSize
+            //val rsParitySize = RS_TOTAL_SIZE - rsDataSize
             val qrByte = CameraActivity.qrBytes
-            val rs = ReedSolomon.create(rsDataSize,rsParitySize)//RS_DATA_SIZE, RS_PARITY_SIZE)
+            //val rs = ReedSolomon.create(rsDataSize,rsParitySize)//RS_DATA_SIZE, RS_PARITY_SIZE)
             val byteMsg : Array<ByteArray> by lazy { Array(RS_TOTAL_SIZE) {ByteArray(qrByte-1) {0} } }
             val erasure : BooleanArray by lazy { BooleanArray(RS_TOTAL_SIZE){false} }
             val resultString = StringBuilder()
@@ -178,10 +180,9 @@ class ProcessingClass {
                     resultString.append(byteMsg[i].toString(Charsets.ISO_8859_1))
                 }
             } catch (e: Exception){
-                Log.e("RS",e.message)
+                e.message?.let { Log.e("RS", it) }
                 resultString.append("Error during Reed Solomon decoding.")
             }
-
             return resultString.toString()
         }
 

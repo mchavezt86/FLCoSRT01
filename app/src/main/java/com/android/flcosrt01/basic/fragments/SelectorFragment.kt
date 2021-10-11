@@ -81,6 +81,7 @@ class SelectorFragment : Fragment() {
         }
 
         val rsData = view.findViewById<EditText>(R.id.rs_data)
+        //TODO: recreate RS engine based on the new value of rsData
         rsData.addTextChangedListener {
             CameraActivity.rsDataSize =  rsData.text.toString().toInt()
         }

@@ -21,6 +21,7 @@ import android.view.View
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
 import com.android.flcosrt01.basic.R
+import com.backblaze.erasure.ReedSolomon
 
 class CameraActivity : AppCompatActivity() {
 
@@ -53,10 +54,13 @@ class CameraActivity : AppCompatActivity() {
         const val ANIMATION_FAST_MILLIS = 50L
         const val ANIMATION_SLOW_MILLIS = 100L
         private const val IMMERSIVE_FLAG_TIMEOUT = 500L
+        const val RS_TOTAL_SIZE = 255
 
         /** Global variables to control system */
         var rsDataSize = 191
         var qrBytes = 17
         var numberOfTx = 1
+        var rsParitySize = RS_TOTAL_SIZE - rsDataSize
+        var rs: ReedSolomon = ReedSolomon.create(rsDataSize, rsParitySize)
     }
 }

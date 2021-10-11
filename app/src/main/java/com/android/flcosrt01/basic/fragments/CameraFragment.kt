@@ -160,7 +160,7 @@ class CameraFragment : Fragment() {
     private lateinit var relativeOrientation: OrientationLiveData
 
     /** Job variable to control multi-thread job */
-    private lateinit var savingMatJob : Job
+    //private lateinit var savingMatJob : Job
 
     /** Queue for storing QR data */
     private val rxData = ConcurrentLinkedDeque<String>()
@@ -471,7 +471,7 @@ class CameraFragment : Fragment() {
             overlay.post(animationTask)
 
             // Initialise the controlling job
-            savingMatJob = Job()
+            //savingMatJob = Job()
 
             var readCounter = 0
 
@@ -509,9 +509,9 @@ class CameraFragment : Fragment() {
             }
             /* Launch another thread to take the byteArrays from the queue and stores them as Mat
             * objects in the ConcurrentLinkedDeque roiMatQueue*/
-            lifecycleScope.launch(Dispatchers.Default + savingMatJob) {
+            val savingMatJob = lifecycleScope.launch(Dispatchers.Default) {
                 //var readCounter = 0
-                while (true){ //readCounter < 100) {
+                while (isActive){ //readCounter < 100) {
                     val imgBytes = withContext(Dispatchers.IO) { bufferQueue.take() }
                     val matImg = Mat(size.height, size.width, CvType.CV_8UC1)
                     matImg.data().put(imgBytes, 0, imgBytes.size)
@@ -558,20 +558,28 @@ class CameraFragment : Fragment() {
                     } , imageReaderHandler)
                 }
                 // Stop job
-                savingMatJob.cancel()
+                savingMatJob.cancel("Sufficient data for RS-FEC")
+
+                val rsStartTime = System.currentTimeMillis()
 
                 /* Call the Reed Solomon Forward Error Correction (RS-FEC) function */
                 val result = ProcessingClass.reedSolomonFEC(rxData)
                 //Log.d(TAG, "Result: $result")
 
-                val totalTime = System.currentTimeMillis() - startTime // Time duration
+                val endTime = System.currentTimeMillis()
+
+                val totalTime = endTime - startTime // Time duration
                 //Log.d(TAG,"FPS: ${100000.0/totalTime}")
                 //Log.d(TAG,"Total time : $totalTime")
                 overlay.post(animationTask)
 
                 // Add an Alert Dialog to show results + execution time
                 val resultDialog = ResultDialogFragment()
-                resultDialog.changeText(result, "$readCounter frames, $totalTime ms")
+                resultDialog.changeText(
+                        getString(R.string.capt_dec_time) + "${rsStartTime-startTime} ms" + System.lineSeparator()
+                        + getString(R.string.rs_time) + "${endTime - rsStartTime} ms" + System.lineSeparator()
+                                + System.lineSeparator() + result
+                        , "$readCounter frames, $totalTime ms")
                 //resultDialog.show(requireParentFragment().parentFragmentManager,"result")
                 resultDialog.show(activity?.supportFragmentManager!!,"result")
 
