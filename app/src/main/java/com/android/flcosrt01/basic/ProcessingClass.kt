@@ -14,10 +14,10 @@ import com.google.zxing.*
 import com.google.zxing.common.HybridBinarizer
 import com.google.zxing.qrcode.QRCodeReader
 import kotlinx.coroutines.*
-import org.bytedeco.opencv.global.opencv_core.normalize
 import java.nio.charset.StandardCharsets
 import java.util.*
 import com.backblaze.erasure.ReedSolomon
+import org.bytedeco.opencv.global.opencv_core.*
 import org.bytedeco.opencv.opencv_core.MatVector
 import org.bytedeco.opencv.opencv_core.Rect
 import java.lang.StringBuilder
@@ -70,6 +70,52 @@ class ProcessingClass {
                 try {
                     noQR = runBlocking {
                         /*var noQR =*/ tmp1.await() && tmp2.await() && tmp3.await()
+                    }
+                }
+                catch (e: CancellationException) {
+                    Log.i("decodeScope", "Exception: $e")
+                }
+            }
+            return noQR
+        }
+
+        /** Function to start the concurrent image processing of Mat objects and concurrent
+         * attempts to decode QRs based on multi-threading.
+         * Input: OpenCV Mat, ConcurrentLinkedDeque
+         * Output: None, modifies the ConcurrentLinkedDeque */
+        fun decodeQR(mat : Mat?, nextMat : Mat?, rxData : ConcurrentLinkedDeque<String>) : Boolean {
+            val matEqP = Mat() // Equalised grayscale image
+            val matNorm = Mat() // Normalised grayscale image
+            val matMean = Mat () // Mean grayscale image
+            var noQR = false
+            mat?.let {
+                // Variables to control multi-thread environment
+                val jobDecode = Job()
+                val scopeDecode = CoroutineScope(Dispatchers.Default+jobDecode)
+
+                // Grayscale decoding
+                val tmp1 = scopeDecode.async(scopeDecode.coroutineContext+Job()) {
+                    decoderQR(it,this, rxData)
+                }
+                // Equalisation decoding
+                val tmp2 = scopeDecode.async(scopeDecode.coroutineContext+Job()) {
+                    equalizeHist(it, matEqP)
+                    decoderQR(matEqP,this, rxData)
+                }
+                // Normalisation decoding
+                val tmp3 = scopeDecode.async(scopeDecode.coroutineContext+Job()) {
+                    normalize(it,matNorm)
+                    decoderQR(matNorm,this, rxData)
+                }
+                // Mean decoding
+                val tmp4 = scopeDecode.async(scopeDecode.coroutineContext+Job()) {
+                    add(multiplyPut(it,0.5), multiplyPut(nextMat!!,0.5), matMean)
+                    decoderQR(matMean,this, rxData)
+                }
+
+                try {
+                    noQR = runBlocking {
+                        /*var noQR =*/ tmp1.await() && tmp2.await() && tmp3.await() && tmp4.await()
                     }
                 }
                 catch (e: CancellationException) {
