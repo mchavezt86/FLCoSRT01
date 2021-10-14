@@ -534,6 +534,7 @@ class CameraFragment : Fragment() {
             lifecycleScope.launch(Dispatchers.Default) {
                 /* When finished clean some variables, remove the ImageReader listener, print the
                 * calculated FPS and re-enable the capture button */
+                //var preMat = Mat(roiArray[0].height(), roiArray[0].width(), CvType.CV_8UC1, Scalar(0.0))
 
                 while (rxData.size < rsDataSize) {
                     //val mat : Mat?
@@ -542,11 +543,13 @@ class CameraFragment : Fragment() {
                         ProcessingClass.decodeQR(mat, rxData)
                     }*/
                     val mat = withContext(Dispatchers.IO){ roiMatQueue.take() }
-                    val nextMat = roiMatQueue.peek()
+                    //val nextMat = roiMatQueue.peek()
                     //ProcessingClass.decodeQR(mat, rxData)
-                    if (!ProcessingClass.decodeQR(mat, nextMat, rxData)) {
+                    if (!ProcessingClass.decodeQR(mat, /*preMat,*/ rxData)) {
                         progressBar.progress = rxData.size
                     }
+                    //preMat = mat.clone()
+
                     //delay(15)
                     //Log.d(TAG, "Currently ${rxData.size} QRs")
                     //progressBar.progress = rxData.size

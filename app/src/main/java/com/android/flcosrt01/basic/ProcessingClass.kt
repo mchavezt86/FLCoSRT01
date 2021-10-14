@@ -64,7 +64,7 @@ class ProcessingClass {
                 // Normalisation decoding
                 val tmp3 = scopeDecode.async(scopeDecode.coroutineContext+Job()) {
                     normalize(it,matNorm)
-                    decoderQR(it,this,rxData)
+                    decoderQR(matNorm,this,rxData)
                 }
 
                 try {
@@ -109,7 +109,8 @@ class ProcessingClass {
                 }
                 // Mean decoding
                 val tmp4 = scopeDecode.async(scopeDecode.coroutineContext+Job()) {
-                    add(multiplyPut(it,0.5), multiplyPut(nextMat!!,0.5), matMean)
+                    //Log.d("AddMat","${it.size().height()}, ${it.size().width()}. ${nextMat!!.size().height()}, ${nextMat.size().width()}")
+                    add(multiplyPut(it,0.5), multiplyPut(nextMat,0.5), matMean)
                     decoderQR(matMean,this, rxData)
                 }
 
