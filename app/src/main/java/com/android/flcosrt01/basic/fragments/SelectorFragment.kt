@@ -66,6 +66,8 @@ class SelectorFragment : Fragment() {
                  R.id.qr_v1 -> CameraActivity.qrBytes = 17
                  R.id.qr_v2 -> CameraActivity.qrBytes = 32
                  R.id.qr_v3 -> CameraActivity.qrBytes = 53
+                 R.id.dm_34 -> CameraActivity.qrBytes = 34
+                 R.id.dm_42 -> CameraActivity.qrBytes = 42
                  else -> Log.d("QRv","QR version error")
              }
         }

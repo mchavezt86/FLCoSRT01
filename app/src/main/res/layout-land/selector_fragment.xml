@@ -18,27 +18,44 @@
             android:id="@+id/qr_v1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
             android:text="@string/qrv1" />
 
         <RadioButton
             android:id="@+id/qr_v2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
             android:text="@string/qrv2" />
 
         <RadioButton
             android:id="@+id/qr_v3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
             android:text="@string/qrv3" />
+
+        <RadioButton
+            android:id="@+id/dm_34"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/dm34" />
+
+        <RadioButton
+            android:id="@+id/dm_42"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/dm42" />
     </RadioGroup>
 
     <RadioGroup
         android:id="@+id/n_tx"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
         android:layout_marginTop="20dp"
-        app:layout_constraintEnd_toStartOf="@+id/rs_data"
         app:layout_constraintStart_toEndOf="@+id/code_version"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -46,12 +63,14 @@
             android:id="@+id/tx_1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
             android:text="@string/tx1" />
 
         <RadioButton
             android:id="@+id/tx_2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
             android:text="@string/tx2" />
     </RadioGroup>
 
@@ -59,33 +78,36 @@
         android:id="@+id/rs_data"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginStart="10dp"
         android:ems="2"
         android:inputType="numberDecimal"
+        android:minWidth="48dp"
+        android:minHeight="48dp"
         android:text="191"
         android:textSize="14sp"
         android:typeface="monospace"
-        app:layout_constraintEnd_toStartOf="@+id/rs_total"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintStart_toEndOf="@+id/n_tx"
+        app:layout_constraintTop_toTopOf="@+id/n_tx" />
 
     <TextView
         android:id="@+id/rs_total"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="10dp"
         android:text="@string/rs_total"
         android:typeface="monospace"
         app:layout_constraintBottom_toBottomOf="@+id/rs_data"
-        app:layout_constraintEnd_toStartOf="@+id/recyclerView"
+        app:layout_constraintStart_toEndOf="@+id/rs_data"
         app:layout_constraintTop_toTopOf="@+id/rs_data"
         app:layout_constraintVertical_bias="0.523" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginStart="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/rs_total"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="1.0" />
 </androidx.constraintlayout.widget.ConstraintLayout>

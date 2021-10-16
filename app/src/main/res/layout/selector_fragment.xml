@@ -19,19 +19,36 @@
             android:id="@+id/qr_v1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
             android:text="@string/qrv1" />
 
         <RadioButton
             android:id="@+id/qr_v2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
             android:text="@string/qrv2" />
 
         <RadioButton
             android:id="@+id/qr_v3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
             android:text="@string/qrv3" />
+
+        <RadioButton
+            android:id="@+id/dm_34"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/dm34" />
+
+        <RadioButton
+            android:id="@+id/dm_42"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/dm42" />
     </RadioGroup>
 
     <RadioGroup
@@ -48,12 +65,14 @@
             android:id="@+id/tx_1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
             android:text="@string/tx1" />
 
         <RadioButton
             android:id="@+id/tx_2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
             android:text="@string/tx2" />
     </RadioGroup>
 
@@ -64,6 +83,8 @@
         android:layout_marginTop="16dp"
         android:ems="2"
         android:inputType="numberDecimal"
+        android:minWidth="48dp"
+        android:minHeight="48dp"
         android:text="191"
         android:textSize="14sp"
         android:typeface="monospace"
