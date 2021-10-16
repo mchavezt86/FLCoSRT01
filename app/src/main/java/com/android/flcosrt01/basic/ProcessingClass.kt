@@ -17,11 +17,13 @@ import kotlinx.coroutines.*
 import java.nio.charset.StandardCharsets
 import java.util.*
 import com.backblaze.erasure.ReedSolomon
+import com.google.zxing.datamatrix.DataMatrixReader
 import org.bytedeco.opencv.global.opencv_core.*
 import org.bytedeco.opencv.opencv_core.MatVector
 import org.bytedeco.opencv.opencv_core.Rect
 import java.lang.StringBuilder
 import kotlin.collections.ArrayList
+import kotlin.properties.Delegates
 
 class ProcessingClass {
 
@@ -38,6 +40,15 @@ class ProcessingClass {
         //private val RS_PARITY_SIZE = RS_TOTAL_SIZE - RS_DATA_SIZE //64
         //Number of bytes in a QR code, version 1: 17 bytes
         //private val QR_BYTES = CameraActivity.qrBytes //17
+
+        private var setQR_noDM = true
+
+        fun setQR() {
+            setQR_noDM = true
+        }
+        fun setDM() {
+            setQR_noDM = false
+        }
 
         /** Function to start the concurrent image processing of Mat objects and concurrent
          * attempts to decode QRs based on multi-threading.
@@ -135,7 +146,8 @@ class ProcessingClass {
             val hints = Hashtable<DecodeHintType, Any>()
             hints[DecodeHintType.CHARACTER_SET] = StandardCharsets.ISO_8859_1.name()//"utf-8"
             hints[DecodeHintType.TRY_HARDER] = true
-            hints[DecodeHintType.POSSIBLE_FORMATS] = BarcodeFormat.QR_CODE
+            //hints[DecodeHintType.POSSIBLE_FORMATS] = BarcodeFormat.QR_CODE
+            hints[DecodeHintType.POSSIBLE_FORMATS] = if (setQR_noDM) { BarcodeFormat.QR_CODE } else { BarcodeFormat.DATA_MATRIX }
 
             val rgba = Mat()
             cvtColor(gray,rgba, COLOR_GRAY2RGBA)
@@ -149,7 +161,10 @@ class ProcessingClass {
             val binBitmap = BinaryBitmap(HybridBinarizer(lumSource))
             //Store result of QR detection
             val result : Result
-            val qrReader = QRCodeReader()
+            //val qrReader = QRCodeReader()
+
+            val qrReader = if (setQR_noDM) { QRCodeReader() } else { DataMatrixReader() }
+
 
             try { //Detect QR and print result
                 result = qrReader.decode(binBitmap,hints)

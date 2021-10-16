@@ -43,6 +43,7 @@ import androidx.navigation.Navigation
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.android.flcosrt01.basic.CameraActivity
+import com.android.flcosrt01.basic.ProcessingClass
 import com.example.android.camera.utils.GenericListAdapter
 import com.android.flcosrt01.basic.R
 import java.awt.font.NumericShaper
@@ -63,11 +64,26 @@ class SelectorFragment : Fragment() {
         val qrVersionRG = view.findViewById<RadioGroup>(R.id.code_version)
         qrVersionRG.setOnCheckedChangeListener { _, checkedId ->
              when (checkedId) {
-                 R.id.qr_v1 -> CameraActivity.qrBytes = 17
-                 R.id.qr_v2 -> CameraActivity.qrBytes = 32
-                 R.id.qr_v3 -> CameraActivity.qrBytes = 53
-                 R.id.dm_34 -> CameraActivity.qrBytes = 34
-                 R.id.dm_42 -> CameraActivity.qrBytes = 42
+                 R.id.qr_v1 -> {
+                     CameraActivity.qrBytes = 17
+                     ProcessingClass.setQR()
+                 }
+                 R.id.qr_v2 -> {
+                     CameraActivity.qrBytes = 32
+                     ProcessingClass.setQR()
+                 }
+                 R.id.qr_v3 -> {
+                     CameraActivity.qrBytes = 53
+                     ProcessingClass.setQR()
+                 }
+                 R.id.dm_34 -> {
+                     CameraActivity.qrBytes = 34
+                     ProcessingClass.setDM()
+                 }
+                 R.id.dm_42 -> {
+                     CameraActivity.qrBytes = 42
+                     ProcessingClass.setDM()
+                 }
                  else -> Log.d("QRv","QR version error")
              }
         }
