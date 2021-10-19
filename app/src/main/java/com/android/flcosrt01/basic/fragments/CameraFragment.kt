@@ -566,9 +566,13 @@ class CameraFragment : Fragment() {
 
                 val rsStartTime = System.currentTimeMillis()
 
+                session.stopRepeating()
+
                 /* Call the Reed Solomon Forward Error Correction (RS-FEC) function */
                 val result = ProcessingClass.reedSolomonFEC(rxData)
                 //Log.d(TAG, "Result: $result")
+
+                session.setRepeatingRequest(newCaptureRequest.build(), null, cameraHandler)
 
                 val endTime = System.currentTimeMillis()
 
@@ -720,7 +724,7 @@ class CameraFragment : Fragment() {
         private const val IMAGE_BUFFER_SIZE: Int = 3
 
         /** Maximum number of images that will be held in the reader's buffer */
-        private const val TOTAL_IMAGES: Int = 50
+        private const val TOTAL_IMAGES: Int = 25
 
         /** Maximum time allowed to wait for the result of an image capture */
         private const val IMAGE_CAPTURE_TIMEOUT_MILLIS: Long = 5000

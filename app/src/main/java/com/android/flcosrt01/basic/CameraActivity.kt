@@ -21,6 +21,7 @@ import android.view.View
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
 import com.android.flcosrt01.basic.R
+import com.backblaze.erasure.OutputInputByteTableCodingLoop
 import com.backblaze.erasure.ReedSolomon
 
 class CameraActivity : AppCompatActivity() {
@@ -61,7 +62,7 @@ class CameraActivity : AppCompatActivity() {
         var qrBytes = 17
         var numberOfTx = 1
         var rsParitySize = RS_TOTAL_SIZE - rsDataSize
-        private val rs: ReedSolomon = ReedSolomon.create(rsDataSize, rsParitySize)
+        private val rs: ReedSolomon = ReedSolomon(rsDataSize, rsParitySize, OutputInputByteTableCodingLoop())
 
         fun getRS() : ReedSolomon {
             return rs
