@@ -512,9 +512,9 @@ class CameraFragment : Fragment() {
             val savingMatJob = lifecycleScope.launch(Dispatchers.Default) {
                 //var readCounter = 0
                 while (isActive){ //readCounter < 100) {
-                    val imgBytes = withContext(Dispatchers.IO) { bufferQueue.take() }
+                    //val imgBytes = withContext(Dispatchers.IO) { bufferQueue.take() }
                     val matImg = Mat(size.height, size.width, CvType.CV_8UC1)
-                    matImg.data().put(imgBytes, 0, imgBytes.size)
+                    matImg.data().put(withContext(Dispatchers.IO) { bufferQueue.take() }, 0, yBufferLength)
                     /*synchronized(roiMatQueue) {
                         roiMatQueue.add(Mat(matImg, roi)) //Add Mat using the ROI or LinkedBlockingQueue
                         //roiMatQueue.add(matImg)

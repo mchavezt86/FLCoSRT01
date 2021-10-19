@@ -4,7 +4,7 @@ import android.graphics.Camera
 import android.util.Log
 import android.util.Size
 import com.android.flcosrt01.basic.CameraActivity.Companion.RS_TOTAL_SIZE
-import com.android.flcosrt01.basic.CameraActivity.Companion.rs
+//import com.android.flcosrt01.basic.CameraActivity.Companion.rs
 import org.bytedeco.opencv.opencv_core.Mat
 import java.util.concurrent.ConcurrentLinkedDeque
 import org.bytedeco.opencv.global.opencv_imgproc.*
@@ -162,9 +162,9 @@ class ProcessingClass {
             //Store result of QR detection
             val result : Result
             //val qrReader = QRCodeReader()
+            bitmap.recycle()
 
             val qrReader = if (setQR_noDM) { QRCodeReader() } else { DataMatrixReader() }
-
 
             try { //Detect QR and print result
                 result = qrReader.decode(binBitmap,hints)
@@ -237,7 +237,7 @@ class ProcessingClass {
         * Try to perform the Reed Solomon decoding and modify the text using the StringBuilder. If
         * the decoding fails the StringBuilder shows an error message.*/
             try {
-                rs.decodeMissing(byteMsg, erasure, 0, qrByte - 1)
+                CameraActivity.getRS().decodeMissing(byteMsg, erasure, 0, qrByte - 1)
                 for (i in 0 until rsDataSize){
                     resultString.append(byteMsg[i].toString(Charsets.ISO_8859_1))
                 }

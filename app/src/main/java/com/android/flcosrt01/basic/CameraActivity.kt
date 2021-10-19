@@ -61,6 +61,10 @@ class CameraActivity : AppCompatActivity() {
         var qrBytes = 17
         var numberOfTx = 1
         var rsParitySize = RS_TOTAL_SIZE - rsDataSize
-        var rs: ReedSolomon = ReedSolomon.create(rsDataSize, rsParitySize)
+        private val rs: ReedSolomon = ReedSolomon.create(rsDataSize, rsParitySize)
+
+        fun getRS() : ReedSolomon {
+            return rs
+        }
     }
 }
