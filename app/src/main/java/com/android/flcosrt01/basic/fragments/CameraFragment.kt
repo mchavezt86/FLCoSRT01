@@ -175,6 +175,9 @@ class CameraFragment : Fragment() {
     /** Number or RS Data size*/
     private val rsDataSize = CameraActivity.rsDataSize
 
+    /** New capture request to be global */
+    private lateinit var newCaptureRequest : CaptureRequest.Builder
+
     override fun onCreateView(
             inflater: LayoutInflater,
             container: ViewGroup?,
@@ -272,6 +275,164 @@ class CameraFragment : Fragment() {
             }
         })
 
+        /* Crate an ArrayBlockingQueue of ByteBuffers of size TOTAL_IMAGES. Check this constant
+        * because it determines the amount of images the bufferQueue can store, while another
+        * thread tries to read it */
+        val bufferQueue = ArrayBlockingQueue<ByteArray>(TOTAL_IMAGES,true)
+        val roiMatQueue = ArrayBlockingQueue<Mat>(TOTAL_IMAGES,true)
+
+        // Listen to the capture button
+        capture_button.setOnClickListener {
+
+            // Disable click listener to prevent multiple requests simultaneously in flight
+            it.isEnabled = false
+            it.isClickable = false
+
+            // Flash animation.
+            overlay.post(animationTask)
+
+            // Initialise the controlling job
+            //savingMatJob = Job()
+
+            var readCounter = 0
+
+            // Start the Progress Bar to 0
+            progressBar.progress = 0
+
+            var startTime = 0L
+
+            val size = Size(args.width,args.height)
+
+            // Perform I/O heavy operations in a different scope
+            //lifecycleScope.launch(Dispatchers.IO) {
+            // Flush any images left in the image reader
+            imageReader.acquireLatestImage()?.close()
+
+            // Save the start time.
+            startTime = System.currentTimeMillis()
+            /* Set the ImageReader listener to just get the Y-plane of the YUV image. This plane
+            * contains just the grayscale version of the image captured.
+            * This reads, gets the plane and stores the byteArray variable in the
+            * ArrayBlockingQueue bufferQueue*/
+            imageReader.setOnImageAvailableListener({ reader ->
+                /*reader.acquireNextImage()?.let { image ->
+                    val byteArray = ByteArray(yBufferLength)
+                    image.planes[0].buffer.get(byteArray,0,yBufferLength)
+                    bufferQueue.add(byteArray)
+                    image.close()
+                    Log.d(TAG, "Image counter: $imgCounter")
+                    imgCounter += 1
+                }*/
+                val image = reader.acquireNextImage() /** Non-null assessment? Reduces capture rate...*/
+            val byteArray = ByteArray(yBufferLength)
+                image?.planes?.get(0)?.buffer?.get(byteArray,0,yBufferLength)
+                bufferQueue.add(byteArray)
+                image?.close()
+                Log.d(TAG, "Image counter: $imgCounter")
+                imgCounter += 1
+            }, imageReaderHandler)
+            //}
+            /* Launch another thread to take the byteArrays from the queue and stores them as Mat
+            * objects in the ConcurrentLinkedDeque roiMatQueue*/
+            val savingMatJob = lifecycleScope.launch(Dispatchers.Default) {
+                //var readCounter = 0
+                while (isActive){ //readCounter < 100) {
+                    //val imgBytes = withContext(Dispatchers.IO) { bufferQueue.take() }
+                    val matImg = Mat(size.height, size.width, CvType.CV_8UC1)
+                    matImg.data().put(withContext(Dispatchers.IO) { bufferQueue.take() }, 0, yBufferLength)
+                    /*synchronized(roiMatQueue) {
+                        roiMatQueue.add(Mat(matImg, roi)) //Add Mat using the ROI or LinkedBlockingQueue
+                        //roiMatQueue.add(matImg)
+                    }*/
+                    //roiMatQueue.add(Mat(matImg,roi))
+                    roiArray.forEach{ roi ->
+                        roiMatQueue.add(Mat(matImg,roi))
+                    }
+                    /*for (i in 0 until numberOfROIs){
+                        roiMatQueue.add(Mat(matImg,roiArray[i]))
+                    }*/
+                    Log.d(TAG, "Taking image $readCounter")
+                    readCounter += 1
+                }
+            }
+
+            lifecycleScope.launch(Dispatchers.Default) {
+                /* When finished clean some variables, remove the ImageReader listener, print the
+                * calculated FPS and re-enable the capture button */
+                //var preMat = Mat(roiArray[0].height(), roiArray[0].width(), CvType.CV_8UC1, Scalar(0.0))
+
+                while (rxData.size < rsDataSize) {
+                    //val mat : Mat?
+                    /*synchronized(roiMatQueue){ //Recheck: idea -> block decodeQR, remove delay
+                        mat = roiMatQueue.pollFirst()
+                        ProcessingClass.decodeQR(mat, rxData)
+                    }*/
+                    val mat = withContext(Dispatchers.IO){ roiMatQueue.take() }
+                    //val nextMat = roiMatQueue.peek()
+                    //ProcessingClass.decodeQR(mat, rxData)
+                    if (!ProcessingClass.decodeQR(mat, /*preMat,*/ rxData)) {
+                        progressBar.progress = rxData.size
+                    }
+                    //preMat = mat.clone()
+
+                    //delay(15)
+                    //Log.d(TAG, "Currently ${rxData.size} QRs")
+                    //progressBar.progress = rxData.size
+                }
+
+                // Remove ImageReader listener and clean variables
+                //lifecycleScope.launch(Dispatchers.IO) {
+                imageReader.setOnImageAvailableListener({ reader ->
+                    reader.acquireLatestImage()?.close()
+                } , imageReaderHandler)
+                //}
+                // Stop job
+                savingMatJob.cancel("Sufficient data for RS-FEC")
+
+                val rsStartTime = System.currentTimeMillis()
+
+                session.stopRepeating()
+
+                /* Call the Reed Solomon Forward Error Correction (RS-FEC) function */
+                val result = ProcessingClass.reedSolomonFEC(rxData)
+                //Log.d(TAG, "Result: $result")
+
+                session.setRepeatingRequest(newCaptureRequest.build(), null, cameraHandler)
+
+                val endTime = System.currentTimeMillis()
+
+                val totalTime = endTime - startTime // Time duration
+                //Log.d(TAG,"FPS: ${100000.0/totalTime}")
+                //Log.d(TAG,"Total time : $totalTime")
+                overlay.post(animationTask)
+
+                // Add an Alert Dialog to show results + execution time
+                val resultDialog = ResultDialogFragment()
+                resultDialog.changeText(
+                        getString(R.string.capt_dec_time) + "${rsStartTime-startTime} ms" + System.lineSeparator()
+                                + getString(R.string.rs_time) + "${endTime - rsStartTime} ms" + System.lineSeparator()
+                                + System.lineSeparator() + result
+                        , "$readCounter frames, $totalTime ms")
+                //resultDialog.show(requireParentFragment().parentFragmentManager,"result")
+                resultDialog.show(activity?.supportFragmentManager!!,"result")
+
+                // Clear some variables
+                imgCounter = 0
+                bufferQueue.clear()
+                roiMatQueue.clear()
+                rxData.clear()
+                it.post {
+                    it.isEnabled = true
+                    it.isClickable = true
+                }
+                // Loop the roiMatQueue to save the files
+                /*Log.d(TAG,"Saving files...")
+                while (roiMatQueue.peekFirst() != null){
+                    saveImage(roiMatQueue.pollFirst()!!)
+                }*/
+            }
+        }
+
         // Used to rotate the output media to match device orientation
         relativeOrientation = OrientationLiveData(requireContext(), characteristics).apply {
             observe(viewLifecycleOwner, Observer {
@@ -291,7 +452,7 @@ class CameraFragment : Fragment() {
         // Open the selected camera
         camera = openCamera(cameraManager, args.cameraId, cameraHandler)
 
-        var startTime = 0L
+        //var startTime = 0L
 
         // Initialize an image reader which will be used to capture continuously
         /* We need to change this to use ImageFormat.YUV_420_888 and use the size selected in the
@@ -351,28 +512,28 @@ class CameraFragment : Fragment() {
         }
 
         /* Try to find the ROI */
-        lifecycleScope.launch(Dispatchers.IO) {
-            imageReader.setOnImageAvailableListener({ reader ->
-                /*val image = */reader.acquireLatestImage()?.let {
-                    val byteArray = ByteArray(yBufferLength)
-                    it.planes[0].buffer.get(byteArray,0,yBufferLength)
-                    it.close()
-                    val matImg = Mat(size.height, size.width, CvType.CV_8UC1)
-                    matImg.data().put(byteArray, 0, byteArray.size)
-                    if (roiArray.size < numberOfROIs) {
-                        ProcessingClass.detectROI(matImg,roiArray)
-                    }
-                }
-                /*val byteArray = ByteArray(yBufferLength)
-                image.planes[0].buffer.get(byteArray,0,yBufferLength)
-                image.close()
+        //lifecycleScope.launch(Dispatchers.IO) {
+        imageReader.setOnImageAvailableListener({ reader ->
+            /*val image = */reader.acquireLatestImage()?.let {
+                val byteArray = ByteArray(yBufferLength)
+                it.planes[0].buffer.get(byteArray,0,yBufferLength)
+                it.close()
                 val matImg = Mat(size.height, size.width, CvType.CV_8UC1)
                 matImg.data().put(byteArray, 0, byteArray.size)
-                if (roi == null) {
-                    roi = ProcessingClass.detectROI(matImg)
-                }*/
-            }, imageReaderHandler)
-        }
+                if (roiArray.size < numberOfROIs) {
+                    ProcessingClass.detectROI(matImg,roiArray)
+                }
+            }
+            /*val byteArray = ByteArray(yBufferLength)
+            image.planes[0].buffer.get(byteArray,0,yBufferLength)
+            image.close()
+            val matImg = Mat(size.height, size.width, CvType.CV_8UC1)
+            matImg.data().put(byteArray, 0, byteArray.size)
+            if (roi == null) {
+                roi = ProcessingClass.detectROI(matImg)
+            }*/
+        }, imageReaderHandler)
+        //}
         while(roiArray.size < numberOfROIs){
             delay(10)
         }
@@ -418,7 +579,7 @@ class CameraFragment : Fragment() {
         /** NOTE: Here should go the code to implement a new capture request based on the AE/AF
          * regions. This needs to be implemented accordingly to get the lowest AE value. Interesting
          * if all the phone cameras work the same. */
-        val newCaptureRequest = camera.createCaptureRequest(
+        newCaptureRequest = camera.createCaptureRequest(
             CameraDevice.TEMPLATE_RECORD).apply {
             addTarget(viewFinder.holder.surface)
             addTarget(imageReader.surface)
@@ -457,7 +618,7 @@ class CameraFragment : Fragment() {
         /* Crate an ArrayBlockingQueue of ByteBuffers of size TOTAL_IMAGES. Check this constant
         * because it determines the amount of images the bufferQueue can store, while another
         * thread tries to read it */
-        val bufferQueue = ArrayBlockingQueue<ByteArray>(TOTAL_IMAGES,true)
+        /*val bufferQueue = ArrayBlockingQueue<ByteArray>(TOTAL_IMAGES,true)
         val roiMatQueue = ArrayBlockingQueue<Mat>(TOTAL_IMAGES,true)
 
         // Listen to the capture button
@@ -606,7 +767,7 @@ class CameraFragment : Fragment() {
                     saveImage(roiMatQueue.pollFirst()!!)
                 }*/
             }
-        }
+        }*/
     }
 
     /** Function to save a [Mat] object as a JPG image */
