@@ -217,8 +217,8 @@ class SelectorFragment : Fragment() {
                     if (fpsRT >= fpsRange) {
                         availableCameras.add(
                                 FormatItem(
-                                        "$orientation JPEG ($id) $size $fpsRange FPS", id,
-                                        ImageFormat.YUV_420_888, size, zoom, aeRange.lower, fpsRange)
+                                        "$orientation JPEG ($id) $size 30 FPS", id,
+                                        ImageFormat.YUV_420_888, size, zoom, aeRange.lower, 30)
                         )
                     }
                     // Return cameras that support RAW capability

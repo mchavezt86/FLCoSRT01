@@ -75,6 +75,7 @@ import java.util.Locale
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.LinkedBlockingQueue
 import kotlin.RuntimeException
+import kotlin.concurrent.thread
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -394,7 +395,10 @@ class CameraFragment : Fragment() {
                 session.stopRepeating()
 
                 /* Call the Reed Solomon Forward Error Correction (RS-FEC) function */
-                val result = ProcessingClass.reedSolomonFEC(rxData)
+                var result = ""
+                thread(start=true,name="ReedSolomon",priority = Thread.MAX_PRIORITY){
+                    result = ProcessingClass.reedSolomonFEC(rxData)
+                        }.join()
                 //Log.d(TAG, "Result: $result")
 
                 session.setRepeatingRequest(newCaptureRequest.build(), null, cameraHandler)
