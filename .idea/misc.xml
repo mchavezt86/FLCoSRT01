@@ -4,6 +4,13 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="../../../../../home/miguel/Android/Sdk/platforms/android-29/data/res/layout/simple_list_item_1.xml" value="0.1578125" />
+        <entry key="..\:/Android/FLCoSRT01/app/src/main/res/layout-land/decoder_fragment.xml" value="0.1419753086419753" />
+        <entry key="..\:/Android/FLCoSRT01/app/src/main/res/layout-land/fragment_camera.xml" value="0.1419753086419753" />
+        <entry key="..\:/Android/FLCoSRT01/app/src/main/res/layout-land/selector_fragment.xml" value="0.1419753086419753" />
+        <entry key="..\:/Android/FLCoSRT01/app/src/main/res/layout/activity_camera.xml" value="0.1" />
+        <entry key="..\:/Android/FLCoSRT01/app/src/main/res/layout/decoder_fragment.xml" value="0.16770833333333332" />
+        <entry key="..\:/Android/FLCoSRT01/app/src/main/res/layout/fragment_camera.xml" value="0.16770833333333332" />
+        <entry key="..\:/Android/FLCoSRT01/app/src/main/res/layout/selector_fragment.xml" value="0.16770833333333332" />
         <entry key="app/src/main/res/layout-land/selector_fragment.xml" value="0.25" />
         <entry key="app/src/main/res/layout/activity_camera.xml" value="0.1578125" />
         <entry key="app/src/main/res/layout/fragment_camera.xml" value="0.1578125" />
