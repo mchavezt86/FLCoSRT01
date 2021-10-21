@@ -325,7 +325,7 @@ class CameraFragment : Fragment() {
                     imgCounter += 1
                 }*/
                 val image = reader.acquireNextImage() /** Non-null assessment? Reduces capture rate...*/
-            val byteArray = ByteArray(yBufferLength)
+                val byteArray = ByteArray(yBufferLength)
                 image?.planes?.get(0)?.buffer?.get(byteArray,0,yBufferLength)
                 bufferQueue.add(byteArray)
                 image?.close()
