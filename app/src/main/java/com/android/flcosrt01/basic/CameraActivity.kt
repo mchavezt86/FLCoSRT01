@@ -55,10 +55,10 @@ class CameraActivity : AppCompatActivity() {
         const val ANIMATION_FAST_MILLIS = 50L
         const val ANIMATION_SLOW_MILLIS = 100L
         private const val IMMERSIVE_FLAG_TIMEOUT = 500L
-        const val RS_TOTAL_SIZE = 255
+        const val RS_TOTAL_SIZE = 64
 
         /** Global variables to control system */
-        var rsDataSize = 191
+        var rsDataSize = 48
         var qrBytes = 17
         var numberOfTx = 1
         var rsParitySize = RS_TOTAL_SIZE - rsDataSize

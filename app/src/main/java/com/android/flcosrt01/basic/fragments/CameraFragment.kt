@@ -279,8 +279,8 @@ class CameraFragment : Fragment() {
         /* Crate an ArrayBlockingQueue of ByteBuffers of size TOTAL_IMAGES. Check this constant
         * because it determines the amount of images the bufferQueue can store, while another
         * thread tries to read it */
-        val bufferQueue = ArrayBlockingQueue<ByteArray>(TOTAL_IMAGES,true)
-        val roiMatQueue = ArrayBlockingQueue<Mat>(TOTAL_IMAGES,true)
+        //val bufferQueue = ArrayBlockingQueue<ByteArray>(TOTAL_IMAGES,true)
+        //val roiMatQueue = ArrayBlockingQueue<Mat>(TOTAL_IMAGES,true)
 
         // Listen to the capture button
         capture_button.setOnClickListener {
@@ -301,6 +301,12 @@ class CameraFragment : Fragment() {
             progressBar.progress = 0
 
             var startTime = 0L
+
+            /* Crate an ArrayBlockingQueue of ByteBuffers of size TOTAL_IMAGES. Check this constant
+            * because it determines the amount of images the bufferQueue can store, while another
+            * thread tries to read it */
+            val bufferQueue = ArrayBlockingQueue<ByteArray>(TOTAL_IMAGES,true)
+            val roiMatQueue = ArrayBlockingQueue<Mat>(TOTAL_IMAGES,true)
 
             val size = Size(args.width,args.height)
 
@@ -390,15 +396,19 @@ class CameraFragment : Fragment() {
                 // Stop job
                 savingMatJob.cancel("Sufficient data for RS-FEC")
 
+                bufferQueue.clear()
+                roiMatQueue.clear()
+
                 val rsStartTime = System.currentTimeMillis()
 
                 session.stopRepeating()
 
                 /* Call the Reed Solomon Forward Error Correction (RS-FEC) function */
-                var result = ""
+                /*var result = ""
                 thread(start=true,name="ReedSolomon",priority = Thread.MAX_PRIORITY){
                     result = ProcessingClass.reedSolomonFEC(rxData)
-                        }.join()
+                        }.join()*/
+                val result = ProcessingClass.reedSolomonFEC(rxData)//,6)
                 //Log.d(TAG, "Result: $result")
 
                 session.setRepeatingRequest(newCaptureRequest.build(), null, cameraHandler)
@@ -422,8 +432,8 @@ class CameraFragment : Fragment() {
 
                 // Clear some variables
                 imgCounter = 0
-                bufferQueue.clear()
-                roiMatQueue.clear()
+                //bufferQueue.clear()
+                //roiMatQueue.clear()
                 rxData.clear()
                 it.post {
                     it.isEnabled = true

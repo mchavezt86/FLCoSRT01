@@ -227,7 +227,7 @@ class ProcessingClass {
                 * UInt) we mask the first byte using a bitwise AND with 0xFF (first byte). The index
                 * is also use to fill the erasure array, as they state which QRs are present. */
                 dataBytes.copyInto(byteMsg[dataBytes[0].toInt() and 0xFF],0,1)
-                erasure[it[0].toInt() and 0xFF]=true
+                erasure[dataBytes[0].toInt() and 0xFF]=true
                 Log.i("RS","${dataBytes[0].toInt() and 0xFF}: " +
                         byteMsg[dataBytes[0].toInt() and 0xFF].contentToString()
                 )
@@ -246,6 +246,108 @@ class ProcessingClass {
                 resultString.append("Error during Reed Solomon decoding.")
             }
             return resultString.toString()
+        }
+
+        /** Function to apply the Reed-Solomon Forward Error Correction (RS-FEC) using the erasure
+         * concurrently using multiple threads
+         * logic.
+         * Input:
+         * - rxData : ConcurrentLinkedDeque is the data
+         * - tasks : Int is the number of concurrent tasks to run
+         * Output: String */
+        fun reedSolomonFEC(rxData: ConcurrentLinkedDeque<String>, tasks : Int) : String {
+            /* Initialise variables */ Log.d("RS","Start of Reed-Solomon")
+            val rsDataSize = CameraActivity.rsDataSize
+            //val rsParitySize = RS_TOTAL_SIZE - rsDataSize
+            val qrByte = CameraActivity.qrBytes
+
+            /* Calculate the number of bytes for each task. If we have 8 concurrent tasks and 16
+            * bytes, each task needs an array of 2 bytes. If we have 31 bytes each run 4 and the
+            * last one only 3 */
+
+            val nBytes = if ((qrByte-1)% tasks == 0) (qrByte-1)/tasks else (qrByte-1)/tasks + 1
+
+            var tempCount = nBytes
+
+            // New arrays
+            val byteMsg : MutableList<Array<ByteArray>> = mutableListOf()
+
+            while (tempCount < qrByte - 1) {
+                byteMsg.add(Array(RS_TOTAL_SIZE) { ByteArray(nBytes) {0} })
+                tempCount += nBytes
+            }
+            // Last element is different size depending on the number of tasks.
+            byteMsg.add(Array(RS_TOTAL_SIZE) { ByteArray(if ((qrByte-1) % tasks == 0) {nBytes} else {(qrByte-1) % nBytes}) {0} })
+
+
+            runBlocking {
+                while (tempCount < qrByte - 1) {
+
+                    tempCount += nBytes
+                }
+            }
+
+            //val byteMsg : Array<ByteArray> by lazy { Array(RS_TOTAL_SIZE) {ByteArray(qrByte-1) {0} } }
+            val erasure : BooleanArray by lazy { BooleanArray(RS_TOTAL_SIZE){false} }
+            val resultString = StringBuilder()
+
+            /* First the data inside de rxData is ordered and stored in byteMsg while filling the
+            * erasure array */
+            // Array of bytes to store the data within the QR.
+            val dataBytes = ByteArray(qrByte)
+            rxData.forEach {
+                /*Convert the QR data, stored as a String and copy it into a Byte Array. The charset is
+                * not mandatory but advisable */
+                it.toByteArray(charset=Charsets.ISO_8859_1).copyInto(dataBytes)
+                /*Copy and set data into the arrays needed to decode the using RS. These bytes may be
+                * interpreted as signed integers. The first byte contains the index in which the 16
+                * bytes of data should be stored and as the index must be Int (and does not accept an
+                * UInt) we mask the first byte using a bitwise AND with 0xFF (first byte). The index
+                * is also use to fill the erasure array, as they state which QRs are present. */
+                byteMsg.forEach { bytes ->
+                    val x = byteMsg.indexOf(bytes)
+                    val y = bytes[dataBytes[0].toInt() and 0xFF].size
+                    //Log.d("RS","x(index)=$x, y(length)=$y")
+                    dataBytes.copyInto(bytes[dataBytes[0].toInt() and 0xFF],0,1+x*y,1+x*y+y)
+                    /*Log.i("RS","${dataBytes[0].toInt() and 0xFF}: " +
+                            bytes[dataBytes[0].toInt() and 0xFF].contentToString() )*/
+                }
+                //dataBytes.copyInto(byteMsg[dataBytes[0].toInt() and 0xFF],0,1)
+                erasure[dataBytes[0].toInt() and 0xFF]=true
+                /*Log.i("RS","${dataBytes[0].toInt() and 0xFF}: " +
+                        byteMsg[dataBytes[0].toInt() and 0xFF].contentToString()
+                )*/
+            }
+
+            /*Apply Reed Solomon, inside a try-catch:
+            * Try to perform the Reed Solomon decoding and modify the text using the StringBuilder. If
+            * the decoding fails the StringBuilder shows an error message.*/
+
+            Log.d("RS","Start of concurrency.")
+
+            runBlocking {
+                byteMsg.forEach { bytes ->
+                    launch(Dispatchers.IO) {
+                        try {
+                            CameraActivity.getRS().decodeMissing(bytes, erasure, 0, bytes[dataBytes[0].toInt() and 0xFF].size)
+                        } catch (e: Exception){
+                            e.message?.let { Log.e("RS", it) }
+                            return@launch
+                        }
+                    }
+                }
+            }
+
+            /*try {
+                CameraActivity.getRS().decodeMissing(byteMsg, erasure, 0, qrByte - 1)
+                for (i in 0 until rsDataSize){
+                    resultString.append(byteMsg[i].toString(Charsets.ISO_8859_1))
+                }
+            } catch (e: Exception){
+                e.message?.let { Log.e("RS", it) }
+                resultString.append("Error during Reed Solomon decoding.")
+            }*/
+            return "Success"
         }
 
         /**Function to detect the active area of the FLC, as it reflects light it is brighter than the
