@@ -5,61 +5,80 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <RadioGroup
-        android:id="@+id/code_version"
+    <HorizontalScrollView
+        android:id="@+id/horizontalScrollView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="20dp"
-        android:checkedButton="@id/qr_v1"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <RadioButton
-            android:id="@+id/qr_v1"
+        <RadioGroup
+            android:id="@+id/code_version"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:text="@string/qrv1" />
+            android:layout_marginTop="5dp"
+            android:checkedButton="@id/qr_v1"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
-        <RadioButton
-            android:id="@+id/qr_v2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:text="@string/qrv2" />
+            <RadioButton
+                android:id="@+id/qr_v1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/qrv1" />
 
-        <RadioButton
-            android:id="@+id/qr_v3"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:text="@string/qrv3" />
+            <RadioButton
+                android:id="@+id/qr_v2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/qrv2" />
 
-        <RadioButton
-            android:id="@+id/dm_34"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:text="@string/dm34" />
+            <RadioButton
+                android:id="@+id/qr_v3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/qrv3" />
 
-        <RadioButton
-            android:id="@+id/dm_42"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:text="@string/dm42" />
-    </RadioGroup>
+            <RadioButton
+                android:id="@+id/dm_34"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/dm34" />
+
+            <RadioButton
+                android:id="@+id/dm_42"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/dm42" />
+
+            <RadioButton
+                android:id="@+id/dm_60"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/dm60" />
+        </RadioGroup>
+    </HorizontalScrollView>
 
     <RadioGroup
         android:id="@+id/n_tx"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
         android:checkedButton="@id/tx_1"
-        app:layout_constraintEnd_toStartOf="@+id/rs_data"
-        app:layout_constraintStart_toEndOf="@+id/code_version"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.29"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/horizontalScrollView">
 
         <RadioButton
             android:id="@+id/tx_1"
@@ -80,7 +99,7 @@
         android:id="@+id/rs_data"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginStart="102dp"
         android:ems="2"
         android:inputType="numberDecimal"
         android:minWidth="48dp"
@@ -89,28 +108,30 @@
         android:textAlignment="viewEnd"
         android:textSize="14sp"
         android:typeface="monospace"
-        app:layout_constraintEnd_toStartOf="@+id/rs_total"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintBottom_toBottomOf="@+id/n_tx"
+        app:layout_constraintStart_toEndOf="@+id/n_tx"
+        app:layout_constraintTop_toTopOf="@+id/n_tx"
+        app:layout_constraintVertical_bias="0.52" />
 
     <TextView
         android:id="@+id/rs_total"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="20dp"
         android:text="@string/rs_total"
         android:typeface="monospace"
         app:layout_constraintBottom_toBottomOf="@+id/rs_data"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/rs_data"
         app:layout_constraintTop_toTopOf="@+id/rs_data"
-        app:layout_constraintVertical_bias="0.571" />
+        app:layout_constraintVertical_bias="0.51" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/camera_list"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/code_version" />
+        app:layout_constraintTop_toBottomOf="@+id/n_tx" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -16,11 +16,12 @@
 <resources>
     <string name="app_name">FLCoS Real-time</string>
     <string name="capture">Capture</string>
-    <string name="qrv1">QR v1</string>
-    <string name="qrv2">QR v2</string>
-    <string name="qrv3">QR v3</string>
-    <string name="dm34">DM 34</string>
-    <string name="dm42">DM 42</string>
+    <string name="qrv1">QRv1</string>
+    <string name="qrv2">QRv2</string>
+    <string name="qrv3">QRv3</string>
+    <string name="dm34">DM34</string>
+    <string name="dm42">DM42</string>
+    <string name="dm60">DM60</string>
     <string name="tx1">1 Tx</string>
     <string name="tx2">2 Tx</string>
     <string name="rs_data">48</string>

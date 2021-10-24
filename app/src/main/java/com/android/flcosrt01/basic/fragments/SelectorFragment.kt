@@ -84,6 +84,10 @@ class SelectorFragment : Fragment() {
                      CameraActivity.qrBytes = 42
                      ProcessingClass.setDM()
                  }
+                 R.id.dm_60 -> {
+                     CameraActivity.qrBytes = 60
+                     ProcessingClass.setDM()
+                 }
                  else -> Log.d("QRv","QR version error")
              }
         }
