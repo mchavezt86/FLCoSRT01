@@ -205,7 +205,7 @@ class SelectorFragment : Fragment() {
                     // All cameras *must* support JPEG output so we don't need to check characteristics
                     // Replaced the JPEG output to YUV_420_288 - mact
                     /* Include zoom for each size to be scaled */
-                    val zoom = scaleZoom(w, h, 6.0F, size)
+                    val zoom = scaleZoom(w, h, 8.0F, size)
                     //val zoom = calcZoom(w, h, 6.0F)
 
                     /*Log.d("Min Frame duration","$size: " +
