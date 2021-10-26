@@ -58,7 +58,7 @@ class CameraActivity : AppCompatActivity() {
         const val RS_TOTAL_SIZE = 64
 
         /** Global variables to control system */
-        var rsDataSize = 48
+        var rsDataSize = 40
         var qrBytes = 17
         var numberOfTx = 1
         var rsParitySize = RS_TOTAL_SIZE - rsDataSize

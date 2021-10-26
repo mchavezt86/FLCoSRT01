@@ -48,6 +48,13 @@
                 android:text="@string/qrv3" />
 
             <RadioButton
+                android:id="@+id/qr_v4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/qrv4" />
+
+            <RadioButton
                 android:id="@+id/dm_34"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

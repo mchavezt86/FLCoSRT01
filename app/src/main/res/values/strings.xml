@@ -19,12 +19,13 @@
     <string name="qrv1">QRv1</string>
     <string name="qrv2">QRv2</string>
     <string name="qrv3">QRv3</string>
+    <string name="qrv4">QRv4</string>
     <string name="dm34">DM34</string>
     <string name="dm42">DM42</string>
     <string name="dm60">DM60</string>
     <string name="tx1">1 Tx</string>
     <string name="tx2">2 Tx</string>
-    <string name="rs_data">48</string>
+    <string name="rs_data">40</string>
     <string name="rs_total">/64</string>
     <string name="capt_dec_time">Capture and decode time: </string>
     <string name="rs_time">Reed Solomon time: </string>

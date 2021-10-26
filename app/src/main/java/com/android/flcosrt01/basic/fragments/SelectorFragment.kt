@@ -76,6 +76,10 @@ class SelectorFragment : Fragment() {
                      CameraActivity.qrBytes = 53
                      ProcessingClass.setQR()
                  }
+                 R.id.qr_v4 -> {
+                     CameraActivity.qrBytes = 78
+                     ProcessingClass.setQR()
+                 }
                  R.id.dm_34 -> {
                      CameraActivity.qrBytes = 34
                      ProcessingClass.setDM()
