@@ -164,7 +164,7 @@ class CameraFragment : Fragment() {
     //private lateinit var savingMatJob : Job
 
     /** Queue for storing QR data */
-    private val rxData = ConcurrentLinkedDeque<String>()
+    //private val rxData = ConcurrentLinkedDeque<String>()
 
     /** Number of ROIs */
     private val numberOfROIs = CameraActivity.numberOfTx
@@ -287,6 +287,9 @@ class CameraFragment : Fragment() {
         val bufferQueue = ArrayBlockingQueue<ByteArray>(TOTAL_IMAGES,true)
         val roiMatQueue = ArrayBlockingQueue<Mat>(TOTAL_IMAGES,true)
 
+        var readCounter = 0
+        var qrCounter = 0
+
         // Listen to the capture button
         capture_button.setOnClickListener {
 
@@ -303,7 +306,8 @@ class CameraFragment : Fragment() {
                 // Initialise the controlling job
                 //savingMatJob = Job()
 
-                var readCounter = 0
+                readCounter = 0
+                qrCounter = 0
 
                 // Start the Progress Bar to 0
                 progressBar.progress = 0
@@ -387,11 +391,19 @@ class CameraFragment : Fragment() {
 
                 bufferQueue.clear()
                 roiMatQueue.clear()
+
+                val resultDialog = ResultDialogFragment()
+                resultDialog.changeText(
+                    "Total unique QRs: $qrCounter" + System.lineSeparator()
+                            +"Total frames: $readCounter"
+                    , "Results")
+                //resultDialog.show(requireParentFragment().parentFragmentManager,"result")
+                resultDialog.show(activity?.supportFragmentManager!!,"result")
             }
 
 
 
-            lifecycleScope.launch(Dispatchers.Default) {
+            /*lifecycleScope.launch(Dispatchers.Default) {
                 /* When finished clean some variables, remove the ImageReader listener, print the
                 * calculated FPS and re-enable the capture button */
                 //var preMat = Mat(roiArray[0].height(), roiArray[0].width(), CvType.CV_8UC1, Scalar(0.0))
@@ -407,6 +419,7 @@ class CameraFragment : Fragment() {
                     //ProcessingClass.decodeQR(mat, rxData)
                     if (!ProcessingClass.decodeQR(mat, /*preMat,*/ rxData)) {
                         progressBar.progress = rxData.size
+                        qrCounter += 1
                     }
                     //preMat = mat.clone()
 
@@ -451,10 +464,9 @@ class CameraFragment : Fragment() {
                 // Add an Alert Dialog to show results + execution time
                 val resultDialog = ResultDialogFragment()
                 resultDialog.changeText(
-                        getString(R.string.capt_dec_time) + "${rsStartTime-startTime} ms" + System.lineSeparator()
-                                + getString(R.string.rs_time) + "${endTime - rsStartTime} ms" + System.lineSeparator()
-                                + System.lineSeparator() + result
-                        , "$readCounter frames, $totalTime ms")
+                    "Total unique QRs: $qrCounter" + System.lineSeparator()
+                        +"Total frames: $readCounter"
+                        , "Results")
                 //resultDialog.show(requireParentFragment().parentFragmentManager,"result")
                 resultDialog.show(activity?.supportFragmentManager!!,"result")
 
@@ -472,7 +484,7 @@ class CameraFragment : Fragment() {
                 while (roiMatQueue.peekFirst() != null){
                     saveImage(roiMatQueue.pollFirst()!!)
                 }*/
-            }
+            }*/
         }
 
         // Used to rotate the output media to match device orientation
@@ -900,23 +912,23 @@ class CameraFragment : Fragment() {
     * the Intent call to Google Maps */
     class ResultDialogFragment : DialogFragment() {
         private var result = "*"
-        private var execTime = "*"
+        private var title = "*"
         override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
             return activity?.let{
                 // Use the Builder class for convenient dialog construction
                 val builder = AlertDialog.Builder(it)
                 builder.setMessage(result)
-                builder.setTitle(execTime)
+                builder.setTitle(title)
                 builder.create()
             } ?: throw IllegalStateException("Activity cannot be null")
         }
-        fun changeText(text : String, time : String) {
+        fun changeText(text : String, titleText : String) {
             /*val builder = AlertDialog.Builder(activity)
             builder.setMessage(text)
             builder.setTitle(time.toString())
             return  builder.create()*/
             result = text
-            execTime = time
+            title = titleText
         }
     }
 
