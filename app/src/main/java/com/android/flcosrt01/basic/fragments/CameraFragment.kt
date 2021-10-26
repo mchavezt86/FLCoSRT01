@@ -164,7 +164,7 @@ class CameraFragment : Fragment() {
     //private lateinit var savingMatJob : Job
 
     /** Queue for storing QR data */
-    //private val rxData = ConcurrentLinkedDeque<String>()
+    private val rxData = ConcurrentLinkedDeque<String>()
 
     /** Number of ROIs */
     private val numberOfROIs = CameraActivity.numberOfTx
@@ -279,7 +279,9 @@ class CameraFragment : Fragment() {
         // Control for capturing state
         var recording = false
 
-        var savingMatJob = Job()
+        var savingMatJob : Job = Job()
+
+        var decodingJob : Job = Job()
 
         /* Crate an ArrayBlockingQueue of ByteBuffers of size TOTAL_IMAGES. Check this constant
         * because it determines the amount of images the bufferQueue can store, while another
@@ -343,7 +345,7 @@ class CameraFragment : Fragment() {
                         imgCounter += 1
                     }*/
                     val image = reader.acquireNextImage() /** Non-null assessment? Reduces capture rate...*/
-                val byteArray = ByteArray(yBufferLength)
+                    val byteArray = ByteArray(yBufferLength)
                     image?.planes?.get(0)?.buffer?.get(byteArray,0,yBufferLength)
                     bufferQueue.add(byteArray)
                     image?.close()
@@ -373,7 +375,92 @@ class CameraFragment : Fragment() {
                         Log.d(TAG, "Taking image $readCounter")
                         readCounter += 1
                     }
-                } as CompletableJob
+                }
+
+                decodingJob = lifecycleScope.launch(Dispatchers.Default) {
+                    /* When finished clean some variables, remove the ImageReader listener, print the
+                                * calculated FPS and re-enable the capture button */
+                    //var preMat = Mat(roiArray[0].height(), roiArray[0].width(), CvType.CV_8UC1, Scalar(0.0))
+
+                    while (isActive) {
+                        //val mat : Mat?
+                        /*synchronized(roiMatQueue){ //Recheck: idea -> block decodeQR, remove delay
+                                        mat = roiMatQueue.pollFirst()
+                                        ProcessingClass.decodeQR(mat, rxData)
+                                    }*/
+                        val mat = withContext(Dispatchers.IO){ roiMatQueue.take() }
+                        //val nextMat = roiMatQueue.peek()
+                        //ProcessingClass.decodeQR(mat, rxData)
+                        if (!ProcessingClass.decodeQR(mat, /*preMat,*/ rxData)) {
+                            progressBar.progress = rxData.size
+                            qrCounter += 1
+                        }
+                        //preMat = mat.clone()
+
+                        //delay(15)
+                        //Log.d(TAG, "Currently ${rxData.size} QRs")
+                        //progressBar.progress = rxData.size
+                    }
+                    /*
+
+                                // Remove ImageReader listener and clean variables
+                                //lifecycleScope.launch(Dispatchers.IO) {
+                                imageReader.setOnImageAvailableListener({ reader ->
+                                    reader.acquireLatestImage()?.close()
+                                } , imageReaderHandler)
+                                //}
+                                // Stop job
+                                savingMatJob.cancel("Sufficient data for RS-FEC")
+
+                                bufferQueue.clear()
+                                roiMatQueue.clear()
+
+                                //val rsStartTime = System.currentTimeMillis()
+
+                                session.stopRepeating()
+
+                                /* Call the Reed Solomon Forward Error Correction (RS-FEC) function */
+                                /*var result = ""
+                                thread(start=true,name="ReedSolomon",priority = Thread.MAX_PRIORITY){
+                                    result = ProcessingClass.reedSolomonFEC(rxData)
+                                        }.join()*/
+                                val result = ProcessingClass.reedSolomonFEC(rxData)//,6)
+                                //Log.d(TAG, "Result: $result")
+
+                                session.setRepeatingRequest(newCaptureRequest.build(), null, cameraHandler)
+
+                                //val endTime = System.currentTimeMillis()
+
+                                //val totalTime = endTime - startTime // Time duration
+                                //Log.d(TAG,"FPS: ${100000.0/totalTime}")
+                                //Log.d(TAG,"Total time : $totalTime")
+                                overlay.post(animationTask)
+
+                                // Add an Alert Dialog to show results + execution time
+                                val resultDialog = ResultDialogFragment()
+                                resultDialog.changeText(
+                                    "Total unique QRs: $qrCounter" + System.lineSeparator()
+                                            +"Total frames: $readCounter"
+                                    , "Results")
+                                //resultDialog.show(requireParentFragment().parentFragmentManager,"result")
+                                resultDialog.show(activity?.supportFragmentManager!!,"result")
+
+                                // Clear some variables
+                                imgCounter = 0
+                                //bufferQueue.clear()
+                                //roiMatQueue.clear()
+                                rxData.clear()
+                                it.post {
+                                    it.isEnabled = true
+                                    it.isClickable = true
+                                }
+                                // Loop the roiMatQueue to save the files
+                                /*Log.d(TAG,"Saving files...")
+                                while (roiMatQueue.peekFirst() != null){
+                                    saveImage(roiMatQueue.pollFirst()!!)
+                                }*/
+                                */
+                }
 
             } else {
                 recording = false
@@ -385,9 +472,11 @@ class CameraFragment : Fragment() {
                 } , imageReaderHandler)
                 //}
                 // Stop job
-                savingMatJob.cancel("Sufficient data for RS-FEC")
+                savingMatJob.cancel("Stop saving into Mat Array.")
+                decodingJob.cancel("Stop decoding.")
 
                 savingMatJob = Job()
+                decodingJob = Job()
 
                 bufferQueue.clear()
                 roiMatQueue.clear()
@@ -400,91 +489,6 @@ class CameraFragment : Fragment() {
                 //resultDialog.show(requireParentFragment().parentFragmentManager,"result")
                 resultDialog.show(activity?.supportFragmentManager!!,"result")
             }
-
-
-
-            /*lifecycleScope.launch(Dispatchers.Default) {
-                /* When finished clean some variables, remove the ImageReader listener, print the
-                * calculated FPS and re-enable the capture button */
-                //var preMat = Mat(roiArray[0].height(), roiArray[0].width(), CvType.CV_8UC1, Scalar(0.0))
-
-                while (rxData.size < rsDataSize) {
-                    //val mat : Mat?
-                    /*synchronized(roiMatQueue){ //Recheck: idea -> block decodeQR, remove delay
-                        mat = roiMatQueue.pollFirst()
-                        ProcessingClass.decodeQR(mat, rxData)
-                    }*/
-                    val mat = withContext(Dispatchers.IO){ roiMatQueue.take() }
-                    //val nextMat = roiMatQueue.peek()
-                    //ProcessingClass.decodeQR(mat, rxData)
-                    if (!ProcessingClass.decodeQR(mat, /*preMat,*/ rxData)) {
-                        progressBar.progress = rxData.size
-                        qrCounter += 1
-                    }
-                    //preMat = mat.clone()
-
-                    //delay(15)
-                    //Log.d(TAG, "Currently ${rxData.size} QRs")
-                    //progressBar.progress = rxData.size
-                }
-
-                // Remove ImageReader listener and clean variables
-                //lifecycleScope.launch(Dispatchers.IO) {
-                imageReader.setOnImageAvailableListener({ reader ->
-                    reader.acquireLatestImage()?.close()
-                } , imageReaderHandler)
-                //}
-                // Stop job
-                savingMatJob.cancel("Sufficient data for RS-FEC")
-
-                bufferQueue.clear()
-                roiMatQueue.clear()
-
-                //val rsStartTime = System.currentTimeMillis()
-
-                session.stopRepeating()
-
-                /* Call the Reed Solomon Forward Error Correction (RS-FEC) function */
-                /*var result = ""
-                thread(start=true,name="ReedSolomon",priority = Thread.MAX_PRIORITY){
-                    result = ProcessingClass.reedSolomonFEC(rxData)
-                        }.join()*/
-                val result = ProcessingClass.reedSolomonFEC(rxData)//,6)
-                //Log.d(TAG, "Result: $result")
-
-                session.setRepeatingRequest(newCaptureRequest.build(), null, cameraHandler)
-
-                //val endTime = System.currentTimeMillis()
-
-                //val totalTime = endTime - startTime // Time duration
-                //Log.d(TAG,"FPS: ${100000.0/totalTime}")
-                //Log.d(TAG,"Total time : $totalTime")
-                overlay.post(animationTask)
-
-                // Add an Alert Dialog to show results + execution time
-                val resultDialog = ResultDialogFragment()
-                resultDialog.changeText(
-                    "Total unique QRs: $qrCounter" + System.lineSeparator()
-                        +"Total frames: $readCounter"
-                        , "Results")
-                //resultDialog.show(requireParentFragment().parentFragmentManager,"result")
-                resultDialog.show(activity?.supportFragmentManager!!,"result")
-
-                // Clear some variables
-                imgCounter = 0
-                //bufferQueue.clear()
-                //roiMatQueue.clear()
-                rxData.clear()
-                it.post {
-                    it.isEnabled = true
-                    it.isClickable = true
-                }
-                // Loop the roiMatQueue to save the files
-                /*Log.d(TAG,"Saving files...")
-                while (roiMatQueue.peekFirst() != null){
-                    saveImage(roiMatQueue.pollFirst()!!)
-                }*/
-            }*/
         }
 
         // Used to rotate the output media to match device orientation
