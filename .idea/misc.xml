@@ -14,7 +14,7 @@
         <entry key="app/src/main/res/layout-land/selector_fragment.xml" value="0.25" />
         <entry key="app/src/main/res/layout/activity_camera.xml" value="0.1578125" />
         <entry key="app/src/main/res/layout/fragment_camera.xml" value="0.1578125" />
-        <entry key="app/src/main/res/layout/selector_fragment.xml" value="0.18" />
+        <entry key="app/src/main/res/layout/selector_fragment.xml" value="0.5" />
       </map>
     </option>
   </component>

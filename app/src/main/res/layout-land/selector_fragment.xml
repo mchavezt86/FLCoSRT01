@@ -95,19 +95,23 @@
         android:layout_marginStart="10dp"
         android:ems="2"
         android:inputType="numberDecimal"
+        android:maxLength="2"
         android:minWidth="48dp"
         android:minHeight="48dp"
         android:text="@string/rs_data"
         android:textAlignment="viewEnd"
-        android:textSize="14sp"
         android:typeface="monospace"
         app:layout_constraintStart_toEndOf="@+id/n_tx"
         app:layout_constraintTop_toTopOf="@+id/n_tx" />
 
-    <TextView
+    <EditText
         android:id="@+id/rs_total"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:inputType="numberDecimal"
+        android:maxLength="2"
+        android:minWidth="48dp"
+        android:minHeight="48dp"
         android:text="@string/rs_total"
         android:typeface="monospace"
         app:layout_constraintBottom_toBottomOf="@+id/rs_data"

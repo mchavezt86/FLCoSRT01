@@ -3,7 +3,7 @@ package com.android.flcosrt01.basic
 import android.graphics.Camera
 import android.util.Log
 import android.util.Size
-import com.android.flcosrt01.basic.CameraActivity.Companion.RS_TOTAL_SIZE
+//import com.android.flcosrt01.basic.CameraActivity.Companion.RS_TOTAL_SIZE
 //import com.android.flcosrt01.basic.CameraActivity.Companion.rs
 import org.bytedeco.opencv.opencv_core.Mat
 import java.util.concurrent.ConcurrentLinkedDeque
@@ -206,11 +206,11 @@ class ProcessingClass {
         fun reedSolomonFEC(rxData: ConcurrentLinkedDeque<String>) : String {
             /* Initialise variables */ Log.d("RS","Start of Reed-Solomon")
             val rsDataSize = CameraActivity.rsDataSize
-            //val rsParitySize = RS_TOTAL_SIZE - rsDataSize
+            val rsTotalSize = CameraActivity.rsTotalSize
             val qrByte = CameraActivity.qrBytes
             //val rs = ReedSolomon.create(rsDataSize,rsParitySize)//RS_DATA_SIZE, RS_PARITY_SIZE)
-            val byteMsg : Array<ByteArray> by lazy { Array(RS_TOTAL_SIZE) {ByteArray(qrByte-1) {0} } }
-            val erasure : BooleanArray by lazy { BooleanArray(RS_TOTAL_SIZE){false} }
+            val byteMsg : Array<ByteArray> by lazy { Array(rsTotalSize) {ByteArray(qrByte-1) {0} } }
+            val erasure : BooleanArray by lazy { BooleanArray(rsTotalSize){false} }
             val resultString = StringBuilder()
 
             /* First the data inside de rxData is ordered and stored in byteMsg while filling the
@@ -260,6 +260,7 @@ class ProcessingClass {
             val rsDataSize = CameraActivity.rsDataSize
             //val rsParitySize = RS_TOTAL_SIZE - rsDataSize
             val qrByte = CameraActivity.qrBytes
+            val rsTotalSize = CameraActivity.rsTotalSize
 
             /* Calculate the number of bytes for each task. If we have 8 concurrent tasks and 16
             * bytes, each task needs an array of 2 bytes. If we have 31 bytes each run 4 and the
@@ -273,11 +274,11 @@ class ProcessingClass {
             val byteMsg : MutableList<Array<ByteArray>> = mutableListOf()
 
             while (tempCount < qrByte - 1) {
-                byteMsg.add(Array(RS_TOTAL_SIZE) { ByteArray(nBytes) {0} })
+                byteMsg.add(Array(rsTotalSize) { ByteArray(nBytes) {0} })
                 tempCount += nBytes
             }
             // Last element is different size depending on the number of tasks.
-            byteMsg.add(Array(RS_TOTAL_SIZE) { ByteArray(if ((qrByte-1) % tasks == 0) {nBytes} else {(qrByte-1) % nBytes}) {0} })
+            byteMsg.add(Array(rsTotalSize) { ByteArray(if ((qrByte-1) % tasks == 0) {nBytes} else {(qrByte-1) % nBytes}) {0} })
 
 
             runBlocking {
@@ -288,7 +289,7 @@ class ProcessingClass {
             }
 
             //val byteMsg : Array<ByteArray> by lazy { Array(RS_TOTAL_SIZE) {ByteArray(qrByte-1) {0} } }
-            val erasure : BooleanArray by lazy { BooleanArray(RS_TOTAL_SIZE){false} }
+            val erasure : BooleanArray by lazy { BooleanArray(rsTotalSize){false} }
             val resultString = StringBuilder()
 
             /* First the data inside de rxData is ordered and stored in byteMsg while filling the

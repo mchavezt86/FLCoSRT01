@@ -96,7 +96,7 @@ class SelectorFragment : Fragment() {
              }
         }
 
-        /* Get the number of transmitters */
+        /* Get and set the number of transmitters */
         val numberOfTx = view.findViewById<RadioGroup>(R.id.n_tx)
         numberOfTx.setOnCheckedChangeListener { _, checkedId ->
             when (checkedId) {
@@ -106,11 +106,30 @@ class SelectorFragment : Fragment() {
             }
         }
 
+        /* Get set the RS engine based on the change of the RS data size */
         val rsData = view.findViewById<EditText>(R.id.rs_data)
-        //TODO: recreate RS engine based on the new value of rsData
         rsData.addTextChangedListener {
-            CameraActivity.rsDataSize =  rsData.text.toString().toInt()
+            if (rsData.text.toString().isNotEmpty()){
+                val dataSize = rsData.text.toString().toInt()
+                if (dataSize != CameraActivity.rsDataSize && dataSize < CameraActivity.rsTotalSize) {
+                    CameraActivity.rsDataSize =  dataSize
+                    CameraActivity.setRS()
+                }
+            }
         }
+
+        /* Get set the RS engine based on the change of the RS data size */
+        val rsTotal = view.findViewById<EditText>(R.id.rs_total)
+        rsTotal.addTextChangedListener { 
+            if (rsTotal.text.toString().isNotEmpty()){
+                val totalSize = rsTotal.text.toString().toInt()
+                if (totalSize != CameraActivity.rsTotalSize && CameraActivity.rsDataSize < totalSize) {
+                    CameraActivity.rsTotalSize = totalSize
+                    CameraActivity.setRS()
+                }
+            }
+        }
+
 
         //view as RecyclerView
         val viewCamList = view.findViewById<RecyclerView>(R.id.camera_list)
