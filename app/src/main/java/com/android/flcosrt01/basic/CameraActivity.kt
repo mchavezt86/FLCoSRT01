@@ -63,9 +63,5 @@ class CameraActivity : AppCompatActivity() {
         var numberOfTx = 1
         var rsParitySize = RS_TOTAL_SIZE - rsDataSize
         private val rs: ReedSolomon = ReedSolomon(rsDataSize, rsParitySize, OutputInputByteTableCodingLoop())
-
-        fun getRS() : ReedSolomon {
-            return rs
-        }
     }
 }

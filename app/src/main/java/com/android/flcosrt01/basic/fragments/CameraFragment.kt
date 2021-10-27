@@ -480,6 +480,7 @@ class CameraFragment : Fragment() {
 
                 bufferQueue.clear()
                 roiMatQueue.clear()
+                rxData.clear()
 
                 val resultDialog = ResultDialogFragment()
                 resultDialog.changeText(

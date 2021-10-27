@@ -27,7 +27,6 @@ import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.params.StreamConfigurationMap
 import android.media.MediaRecorder
 import android.os.Bundle
-import android.text.TextWatcher
 import android.util.Log
 import android.util.Range
 import android.util.Size
@@ -180,10 +179,10 @@ class SelectorFragment : Fragment() {
                         characteristics.get(CameraCharacteristics.LENS_FACING)!!)
 
                 // Query the available capabilities and output formats
-                val capabilities = characteristics.get(
+                /*val capabilities = characteristics.get(
                         CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)!!
                 val outputFormats = characteristics.get(
-                        CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!.outputFormats
+                        CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!.outputFormats*/
                 /*Log.d("FPS ranges",
                     characteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES).contentToString()
                 ) // Print the available FPS for the camera. */
@@ -210,7 +209,6 @@ class SelectorFragment : Fragment() {
                     // Replaced the JPEG output to YUV_420_288 - mact
                     /* Include zoom for each size to be scaled */
                     val zoom = scaleZoom(w, h, 8.0F, size)
-                    //val zoom = calcZoom(w, h, 6.0F)
 
                     /*Log.d("Min Frame duration","$size: " +
                             "${characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!
@@ -229,39 +227,9 @@ class SelectorFragment : Fragment() {
                                         ImageFormat.YUV_420_888, size, zoom, aeRange.lower, 30)
                         )
                     }
-                    // Return cameras that support RAW capability
-                    /*if (capabilities.contains(
-                            CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW) &&
-                        outputFormats.contains(ImageFormat.RAW_SENSOR)) {
-                        availableCameras.add(
-                            FormatItem(
-                                "$orientation RAW ($id) $size", id, ImageFormat.RAW_SENSOR, size, zoom, aeRange.lower)
-                        )
-                    }*/
-
-                    // Return cameras that support JPEG DEPTH capability
-                    /*if (capabilities.contains(
-                            CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT) &&
-                        outputFormats.contains(ImageFormat.DEPTH_JPEG)) {
-                        availableCameras.add(
-                            FormatItem(
-                                "$orientation DEPTH ($id) $size", id, ImageFormat.DEPTH_JPEG, size, zoom, aeRange.lower)
-                        )
-                    }*/
                 }
             }
             return availableCameras
-        }
-
-        private fun calcZoom(w: Int, h: Int, zoom: Float) : Rect{
-            val newZoom = zoom.coerceIn(1.0F,zoom)
-
-            val centerX = w/2
-            val centerY = h/2
-            val deltaX = ((0.5F * w) / newZoom ).toInt()
-            val deltaY = ((0.5F * h) / newZoom ).toInt()
-
-            return Rect(centerX - deltaX,centerY - deltaY,centerX + deltaX,centerY + deltaY)
         }
 
         private fun scaleZoom(w: Int, h: Int, zoom: Float, size: Size) : Rect{
