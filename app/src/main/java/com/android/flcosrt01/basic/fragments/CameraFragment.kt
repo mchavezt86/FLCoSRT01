@@ -196,6 +196,8 @@ class CameraFragment : Fragment() {
         }
         progressBar.max = rsDataSize
 
+        capture_button.visibility = View.VISIBLE
+
         viewFinder.holder.addCallback(object : SurfaceHolder.Callback {
             override fun surfaceDestroyed(holder: SurfaceHolder) = Unit
 
