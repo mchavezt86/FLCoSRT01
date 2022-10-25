@@ -35,6 +35,7 @@ import android.media.ImageReader
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.Looper
 import android.util.Log
 import android.util.Range
 import android.util.Size
@@ -67,6 +68,8 @@ import org.opencv.core.CvType
 import org.bytedeco.opencv.global.opencv_imgcodecs.imwrite
 import java.io.Closeable
 import java.io.File
+import java.io.FileReader
+import java.io.FileWriter
 import java.lang.Runnable
 import java.text.SimpleDateFormat
 import java.util.concurrent.ArrayBlockingQueue
@@ -421,14 +424,14 @@ class CameraFragment : Fragment() {
                 overlay.post(animationTask)
 
                 // Add an Alert Dialog to show results + execution time
-                val resultDialog = ResultDialogFragment()
+                /*val resultDialog = ResultDialogFragment()
                 resultDialog.changeText(
                         getString(R.string.capt_dec_time) + "${rsStartTime-startTime} ms" + System.lineSeparator()
                                 + getString(R.string.rs_time) + "${endTime - rsStartTime} ms" + System.lineSeparator()
                                 + System.lineSeparator() + result
                         , "$readCounter frames, $totalTime ms")
                 //resultDialog.show(requireParentFragment().parentFragmentManager,"result")
-                resultDialog.show(activity?.supportFragmentManager!!,"result")
+                resultDialog.show(activity?.supportFragmentManager!!,"result")*/
 
                 // Clear some variables
                 imgCounter = 0
@@ -440,10 +443,19 @@ class CameraFragment : Fragment() {
                     it.isClickable = true
                 }
                 // Loop the roiMatQueue to save the files
-                /*Log.d(TAG,"Saving files...")
-                while (roiMatQueue.peekFirst() != null){
+                Log.d(TAG,"Saving files...")
+                /*while (roiMatQueue.peekFirst() != null){
                     saveImage(roiMatQueue.pollFirst()!!)
                 }*/
+
+                val filename = saveMap(result)
+
+                Handler(Looper.getMainLooper()).post {
+                    Navigation.findNavController(requireActivity(), R.id.fragment_container)
+                        .navigate(
+                            CameraFragmentDirections.actionCameraFragmentToMapsMarkerFragment(filename)
+                        )
+                }
             }
         }
 
@@ -786,14 +798,37 @@ class CameraFragment : Fragment() {
 
     /** Function to save a [Mat] object as a JPG image */
     private fun saveImage(mat : Mat) : Boolean {
-        val file = createFile(requireContext(), "jpg")
+        val file = createImgFile(requireContext(), "jpg")
         return imwrite(file.absolutePath,mat)
     }
 
     /** Creates a [File] named with the current date and time */
-    private fun createFile(context: Context, extension: String): File {
+    private fun createImgFile(context: Context, extension: String): File {
         val sdf = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS", Locale.US)
         return File(context.filesDir, "IMG_${sdf.format(Date())}.$extension")
+    }
+
+    /** Function to save a Map coordinates as a txt image */
+    private fun saveMap(map : String) : String {
+        val file = createMapFile(requireContext(), "txt")
+        //var success = true
+
+        try {
+            val writer = FileWriter(file)
+            writer.append(map)
+            writer.flush()
+            writer.close()
+        } catch (e: Exception){
+            //success = false
+            Log.e("File","File writing error")
+        }
+        return file.absolutePath
+    }
+
+    /** Creates a [File] named with the current date and time */
+    private fun createMapFile(context: Context, extension: String): File {
+        val sdf = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS", Locale.US)
+        return File(context.filesDir, "MAP_${sdf.format(Date())}.$extension")
     }
 
     /** Opens the camera and returns the opened device (as the result of the suspend coroutine) */

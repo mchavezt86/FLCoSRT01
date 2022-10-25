@@ -66,10 +66,6 @@
             app:popUpTo="@id/camera_fragment"
             app:popUpToInclusive="true"/>
 
-        <action
-            android:id="@+id/action_camera_to_jpeg_viewer"
-            app:launchSingleTop="true"
-            app:destination="@id/image_viewer_fragment" />
         <argument
             android:name="width"
             app:argType="integer" />
@@ -85,28 +81,19 @@
         <argument
             android:name="fps"
             app:argType="integer" />
+        <action
+            android:id="@+id/action_camera_fragment_to_mapsMarkerFragment"
+            app:destination="@id/mapsMarkerFragment" />
 
     </fragment>
 
     <fragment
-        android:id="@+id/image_viewer_fragment"
-        android:name="com.android.flcosrt01.basic.fragments.ImageViewerFragment"
-        android:label="Image Viewer" >
-
+        android:id="@+id/mapsMarkerFragment"
+        android:name="com.android.flcosrt01.basic.fragments.MapsMarkerFragment"
+        android:label="MapsMarkerFragment" >
         <argument
-            android:name="file_path"
-            app:argType="string"
-            app:nullable="false"/>
-
-        <argument
-            android:name="orientation"
-            app:argType="integer"
-            android:defaultValue="0" />
-
-        <argument
-            android:name="depth"
-            app:argType="boolean"
-            android:defaultValue="false" />
+            android:name="filename"
+            app:argType="string" />
     </fragment>
 
 </navigation>
