@@ -1,51 +1,21 @@
 
-Android Camera2Basic Sample
+Sunbox: Map example
 ===========================
 
-This sample demonstrates using the Camera2 API to capture a JPEG, DEPTH or RAW frame.
-Check the source code to see a simple example of how to display the camera preview
-and capture a still image using the default configuration with the selected pixel
-format.
+This branch of the **Sunbox** project can read a specific sequence of QR codes that builds
+a map with markers and information about those markers.
 
 Introduction
 ------------
 
-The [Camera2 API][1] allows users to capture RAW images, i.e. unprocessed pixel data
-directly from the camera sensor that has not yet been converted into a format and
-colorspace typically used for displaying and storing images viewed by humans.  The
-[DngCreator][2] class is provided as part of the Camera2 API as a utility for saving
-RAW images as DNG files.
+The final goal of **Sunbox** is to transmit location information to a smartphone without using
+any radio connection. By having a set of **Sunbox** devices distributed across a place, they can
+jointly transmit a route information by indicating the location of the next **Sunbox**.
 
-This sample displays a live camera preview in a TextureView, and saves JPEG and DNG
-file for each image captured.
+This code should run on Android devices, it follows the same logic as the master branch.
 
-[1]: https://developer.android.com/reference/android/hardware/camera2/package-summary.html
-[2]: https://developer.android.com/reference/android/hardware/camera2/DngCreator.html
+Requirement
+------------
 
-Pre-requisites
---------------
-
-- Android SDK 29+
-- Android Studio 3.5+
-
-Screenshots
--------------
-
-<img src="screenshots/main.png" height="400" alt="Screenshot"/> 
-
-Getting Started
----------------
-
-This sample uses the Gradle build system. To build this project, use the
-"gradlew build" command or use "Import Project" in Android Studio.
-
-Support
--------
-
-- Stack Overflow: http://stackoverflow.com/questions/tagged/android
-
-If you've found an error in this sample, please file an issue:
-https://github.com/android/camera-samples
-
-Patches are encouraged, and may be submitted by forking this project and
-submitting a pull request through GitHub. Please see CONTRIBUTING.md for more details.
+The map should be in the phone's cache before trying this example in Airplane mode (without
+any wireless connection).
