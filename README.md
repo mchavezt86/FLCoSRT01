@@ -8,8 +8,7 @@
     <h1>SunBox: Screen-to-Camera Communication with Ambient Light</h1>
 </div>
 
-Using [Camera2 API][1] the code FLCoSRT01 (FLCoS Real Time 01) is the main code for using the
-**Sunbox** system.
+Using [Camera2 API][1] as the starting point, this repository contains the main code for the **Sunbox** Android app.
 
 Description
 ------------
