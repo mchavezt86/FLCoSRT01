@@ -1,51 +1,23 @@
 
-Android Camera2Basic Sample
+Sunbox (FLCoSRT01)
 ===========================
+Using [Camera2 API][1] the code FLCoSRT01 (FLCoS Real Time 01) is the main code for using the
+**Sunbox** system.
 
-This sample demonstrates using the Camera2 API to capture a JPEG, DEPTH or RAW frame.
-Check the source code to see a simple example of how to display the camera preview
-and capture a still image using the default configuration with the selected pixel
-format.
-
-Introduction
+Description
 ------------
 
-The [Camera2 API][1] allows users to capture RAW images, i.e. unprocessed pixel data
-directly from the camera sensor that has not yet been converted into a format and
-colorspace typically used for displaying and storing images viewed by humans.  The
-[DngCreator][2] class is provided as part of the Camera2 API as a utility for saving
-RAW images as DNG files.
+The code follows the following logic:
+1. Select the appropriate resolution, the type of code (QR or DM) and the rate of Reed-Solomon code
+2. Once the camera starts, it will try to detect the screen (FLCoS reflecting sunlight).
+3. The detection succeed when a rectangle is drawn surrounding the screen.
+4. By pressing the circular button, the camera starts capturing the QR or DM codes transmitted and
+based on the information from step 1, the programme decodes the message.
 
-This sample displays a live camera preview in a TextureView, and saves JPEG and DNG
-file for each image captured.
+Requirements
+------------
+* The code requires the FLCoS from **Sunbox** specified in the [Sunbox paper](https://dl.acm.org/doi/10.1145/3534602)
+* The information displayed by **Sunbox** should be created following [this code](https://github.com/mchavezt86/videoQR01),
+file _QR+RSGen.py_.
 
 [1]: https://developer.android.com/reference/android/hardware/camera2/package-summary.html
-[2]: https://developer.android.com/reference/android/hardware/camera2/DngCreator.html
-
-Pre-requisites
---------------
-
-- Android SDK 29+
-- Android Studio 3.5+
-
-Screenshots
--------------
-
-<img src="screenshots/main.png" height="400" alt="Screenshot"/> 
-
-Getting Started
----------------
-
-This sample uses the Gradle build system. To build this project, use the
-"gradlew build" command or use "Import Project" in Android Studio.
-
-Support
--------
-
-- Stack Overflow: http://stackoverflow.com/questions/tagged/android
-
-If you've found an error in this sample, please file an issue:
-https://github.com/android/camera-samples
-
-Patches are encouraged, and may be submitted by forking this project and
-submitting a pull request through GitHub. Please see CONTRIBUTING.md for more details.
