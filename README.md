@@ -24,7 +24,11 @@ based on the information from step 1, the programme decodes the message.
 Requirements
 ------------
 * The code requires the FLCoS from **Sunbox** specified in the [Sunbox paper](https://dl.acm.org/doi/10.1145/3534602)
-* The information displayed by **Sunbox** should be created following [this code](https://github.com/mchavezt86/videoQR),
+* The information displayed by **Sunbox** should be created [this code](https://github.com/mchavezt86/videoQR),
 file _QR+RSGen.py_.
+
+Citation
+------------
+If you find this repo useful for your academic work, please cite our [original paper](https://dl.acm.org/doi/10.1145/3534602).
 
 [1]: https://developer.android.com/reference/android/hardware/camera2/package-summary.html
